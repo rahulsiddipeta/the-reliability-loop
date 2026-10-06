@@ -1,0 +1,379 @@
+---
+const topics = [
+  "SRE",
+  "Platform Engineering",
+  "Distributed Systems",
+  "Observability",
+  "AI & Automation",
+];
+
+const articles = [
+  {
+    category: "AI & AUTOMATION",
+    title: "Who Verifies the AI Agent That Fixed Production?",
+    description:
+      "Autonomous remediation creates a new reliability problem: the system taking action shouldn't be the only system deciding whether that action worked.",
+    readTime: "7 MIN READ",
+  },
+  {
+    category: "OBSERVABILITY",
+    title: "Telemetry Is Becoming the Context Layer for AI Operations",
+    description:
+      "Logs, metrics and traces aren't just for engineers anymore. They're becoming the context AI needs to reason about production systems.",
+    readTime: "8 MIN READ",
+  },
+];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta
+      name="description"
+      content="The Reliability Loop — ideas and deep dives on SRE, platform engineering, observability, distributed systems, AI and automation."
+    />
+    <title>The Reliability Loop</title>
+
+    <style is:global>
+      :root {
+        --bg: #0b0d10;
+        --surface: #11151a;
+        --text: #f2f4f7;
+        --muted: #9ca6b2;
+        --line: #252b33;
+        --accent: #7dd3fc;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .container {
+        width: min(1120px, calc(100% - 48px));
+        margin: 0 auto;
+      }
+
+      header {
+        height: 82px;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid var(--line);
+      }
+
+      nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+      }
+
+      .brand {
+        font-size: 14px;
+        font-weight: 750;
+        letter-spacing: 0.13em;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 32px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .hero {
+        padding: 110px 0 90px;
+      }
+
+      .eyebrow {
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        margin-bottom: 28px;
+      }
+
+      h1 {
+        font-size: clamp(52px, 7vw, 92px);
+        letter-spacing: -0.055em;
+        line-height: 0.97;
+        max-width: 920px;
+        margin: 0;
+        font-weight: 650;
+      }
+
+      .hero-copy {
+        color: var(--muted);
+        font-size: 20px;
+        line-height: 1.7;
+        max-width: 720px;
+        margin-top: 38px;
+      }
+
+      .topics {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 45px;
+      }
+
+      .topic {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 9px 14px;
+        color: #c5ccd5;
+        font-size: 12px;
+      }
+
+      section {
+        border-top: 1px solid var(--line);
+        padding: 72px 0;
+      }
+
+      .section-label {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.17em;
+        margin-bottom: 34px;
+      }
+
+      .featured {
+        display: grid;
+        grid-template-columns: 1.5fr 0.7fr;
+        gap: 80px;
+      }
+
+      h2 {
+        font-size: clamp(36px, 5vw, 62px);
+        line-height: 1.05;
+        letter-spacing: -0.04em;
+        margin: 0;
+        font-weight: 600;
+      }
+
+      .featured-copy,
+      .article-description {
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .featured-copy {
+        font-size: 18px;
+        margin-top: 28px;
+        max-width: 690px;
+      }
+
+      .metadata {
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+      }
+
+      .featured-side {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        gap: 14px;
+        color: var(--muted);
+      }
+
+      .articles {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 70px;
+      }
+
+      .article {
+        padding-right: 20px;
+      }
+
+      .article h3 {
+        font-size: 28px;
+        line-height: 1.2;
+        letter-spacing: -0.025em;
+        margin: 17px 0;
+        font-weight: 600;
+      }
+
+      .article-description {
+        font-size: 15px;
+      }
+
+      .loop-section {
+        text-align: center;
+      }
+
+      .loop {
+        margin: 35px auto 0;
+        max-width: 640px;
+        padding: 40px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        color: #cbd5e1;
+        line-height: 2.1;
+        font-size: 14px;
+      }
+
+      .loop strong {
+        color: var(--accent);
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 45px 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .footer-content {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      @media (max-width: 720px) {
+        .container {
+          width: min(100% - 32px, 1120px);
+        }
+
+        .hero {
+          padding: 75px 0;
+        }
+
+        .nav-links {
+          display: none;
+        }
+
+        .featured,
+        .articles {
+          grid-template-columns: 1fr;
+          gap: 40px;
+        }
+
+        h1 {
+          font-size: 52px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <nav class="container">
+        <a class="brand" href="/">THE RELIABILITY LOOP</a>
+
+        <div class="nav-links">
+          <a href="#articles">Articles</a>
+          <a href="#topics">Topics</a>
+          <a href="#about">About</a>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <div class="container">
+        <div class="hero">
+          <div class="eyebrow">Reliability Engineering / Field Notes</div>
+
+          <h1>Engineering systems that survive reality.</h1>
+
+          <p class="hero-copy">
+            Ideas and deep dives on reliability engineering, distributed
+            systems, observability, platform engineering and the emerging role
+            of AI in production operations.
+          </p>
+
+          <div class="topics" id="topics">
+            {topics.map((topic) => <span class="topic">{topic}</span>)}
+          </div>
+        </div>
+
+        <section>
+          <div class="section-label">FEATURED / 001</div>
+
+          <div class="featured">
+            <div>
+              <div class="metadata">SRE · AI & AUTOMATION</div>
+
+              <h2>From Automated Operations to Autonomous Reliability</h2>
+
+              <p class="featured-copy">
+                The next evolution of SRE isn't simply responding to incidents
+                faster. It's deciding which parts of the incident lifecycle
+                should require a human at all.
+              </p>
+            </div>
+
+            <div class="featured-side">
+              <span>Rahul Siddipeta</span>
+              <span>9 min read</span>
+              <span>October 2026</span>
+              <span>Read article →</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="articles">
+          <div class="section-label">LATEST FROM THE LOOP</div>
+
+          <div class="articles">
+            {
+              articles.map((article) => (
+                <article class="article">
+                  <div class="metadata">{article.category}</div>
+                  <h3>{article.title}</h3>
+                  <p class="article-description">{article.description}</p>
+                  <div class="metadata">{article.readTime} →</div>
+                </article>
+              ))
+            }
+          </div>
+        </section>
+
+        <section class="loop-section">
+          <div class="section-label">THE OPERATING MODEL</div>
+
+          <h2>Reliability is a loop.</h2>
+
+          <div class="loop">
+            <strong>OBSERVE</strong>
+            <br />↓<br />
+            DETECT → UNDERSTAND → DECIDE
+            <br />↑　　　　　　　　　　　↓<br />
+            LEARN ← VERIFY ← ACT
+            <br /><br />
+            <strong>↻ REPEAT</strong>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer id="about">
+      <div class="container footer-content">
+        <span>© 2026 The Reliability Loop</span>
+        <span>Written by Rahul Siddipeta</span>
+      </div>
+    </footer>
+  </body>
+</html>
