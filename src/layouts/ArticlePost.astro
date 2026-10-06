@@ -22,12 +22,14 @@ const formattedDate = pubDate.toLocaleDateString('en-US', {
   month: 'long',
   day: 'numeric',
   year: 'numeric',
+  timeZone: 'UTC',
 });
 
 const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
   month: 'long',
   day: 'numeric',
   year: 'numeric',
+  timeZone: 'UTC',
 });
 ---
 
@@ -97,7 +99,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
 
         margin: 0 auto;
 
-        padding: 82px 0 58px;
+        padding: 68px 0 48px;
       }
 
       .article-category {
@@ -192,16 +194,16 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
 
         margin: 0 auto;
 
-        padding: 58px 0 95px;
+        padding: 48px 0 90px;
 
         color: var(--text-body);
 
         font-size: 18px;
-        line-height: 1.7;
+        line-height: 1.64;
       }
 
       .article-body p {
-        margin: 0 0 1.15em;
+        margin: 0 0 0.95em;
 
         color: var(--text-body);
       }
@@ -521,7 +523,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
         }
 
         .article-header {
-          padding: 58px 0 44px;
+          padding: 52px 0 40px;
         }
 
         .article-title {
@@ -544,14 +546,14 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
         }
 
         .article-body {
-          padding-top: 48px;
+          padding-top: 42px;
 
           font-size: 17px;
-          line-height: 1.68;
+          line-height: 1.64;
         }
 
         .article-body p {
-          margin-bottom: 1.1em;
+          margin-bottom: 0.95em;
         }
 
         .article-body h2 {
