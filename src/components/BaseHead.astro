@@ -1,52 +1,153 @@
 ---
-// Import the global.css file here so that it is included on
-// all pages through the use of the <BaseHead /> component.
 import '../styles/global.css';
+
 import type { ImageMetadata } from 'astro';
-import FallbackImage from '../assets/blog-placeholder-1.jpg';
-import { SITE_TITLE } from '../consts';
 import { Font } from 'astro:assets';
 
+import FallbackImage from '../assets/blog-placeholder-1.jpg';
+import { SITE_TITLE } from '../consts';
+
 interface Props {
-	title: string;
-	description: string;
-	image?: ImageMetadata;
+  title: string;
+  description: string;
+  image?: ImageMetadata;
+  type?: 'website' | 'article';
 }
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const {
+  title,
+  description,
+  image = FallbackImage,
+  type = 'website',
+} = Astro.props;
 
-const { title, description, image = FallbackImage } = Astro.props;
+const canonicalURL = new URL(
+  Astro.url.pathname,
+  Astro.site
+);
+
+const socialImageURL = new URL(
+  image.src,
+  Astro.site
+);
 ---
 
-<!-- Global Metadata -->
+<!-- Core metadata -->
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="icon" href="/favicon.ico" />
-<link rel="sitemap" href="/sitemap-index.xml" />
-<link
-	rel="alternate"
-	type="application/rss+xml"
-	title={SITE_TITLE}
-	href={new URL('rss.xml', Astro.site)}
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1"
 />
+
 <meta name="generator" content={Astro.generator} />
 
-<Font cssVariable="--font-atkinson" preload />
+<Font
+  cssVariable="--font-atkinson"
+  preload
+/>
 
-<!-- Canonical URL -->
-<link rel="canonical" href={canonicalURL} />
+<!-- Site discovery -->
+<link
+  rel="canonical"
+  href={canonicalURL}
+/>
 
-<!-- Primary Meta Tags -->
+<link
+  rel="sitemap"
+  href="/sitemap-index.xml"
+/>
+
+<link
+  rel="alternate"
+  type="application/rss+xml"
+  title={SITE_TITLE}
+  href={new URL('/rss.xml', Astro.site)}
+/>
+
+<!-- Favicons -->
+<link
+  rel="icon"
+  type="image/svg+xml"
+  href="/favicon.svg"
+/>
+
+<link
+  rel="icon"
+  href="/favicon.ico"
+/>
+
+<!-- Primary metadata -->
 <title>{title}</title>
-<meta name="description" content={description} />
 
-<!-- Open Graph / Facebook -->
-<meta property="og:type" content="website" />
-<meta property="og:url" content={Astro.url} />
-<meta property="og:title" content={title} />
-<meta property="og:description" content={description} />
-<meta property="og:image" content={new URL(image.src, Astro.url)} />
+<meta
+  name="description"
+  content={description}
+/>
 
-<!-- Twitter -->
-<meta name="twitter:card" content="summary_large_image" />
+<meta
+  name="theme-color"
+  content="#f8f7fc"
+/>
+
+<!-- Open Graph -->
+<meta
+  property="og:type"
+  content={type}
+/>
+
+<meta
+  property="og:site_name"
+  content={SITE_TITLE}
+/>
+
+<meta
+  property="og:url"
+  content={canonicalURL}
+/>
+
+<meta
+  property="og:title"
+  content={title}
+/>
+
+<meta
+  property="og:description"
+  content={description}
+/>
+
+<meta
+  property="og:image"
+  content={socialImageURL}
+/>
+
+<meta
+  property="og:image:alt"
+  content={`${title} — ${SITE_TITLE}`}
+/>
+
+<!-- Twitter / X -->
+<meta
+  name="twitter:card"
+  content="summary_large_image"
+/>
+
+<meta
+  name="twitter:title"
+  content={title}
+/>
+
+<meta
+  name="twitter:description"
+  content={description}
+/>
+
+<meta
+  name="twitter:image"
+  content={socialImageURL}
+/>
+
+<meta
+  name="twitter:image:alt"
+  content={`${title} — ${SITE_TITLE}`}
+/>
