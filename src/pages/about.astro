@@ -1,63 +1,294 @@
 ---
-import AboutHeroImage from '../assets/blog-placeholder-about.jpg';
-import Layout from '../layouts/BlogPost.astro';
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
 ---
 
-<Layout
-	title="About Me"
-	description="Lorem ipsum dolor sit amet"
-	pubDate={new Date('August 08 2021')}
-	heroImage={AboutHeroImage}
->
-	<p>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
-		labore et dolore magna aliqua. Vitae ultricies leo integer malesuada nunc vel risus commodo
-		viverra. Adipiscing enim eu turpis egestas pretium. Euismod elementum nisi quis eleifend quam
-		adipiscing. In hac habitasse platea dictumst vestibulum. Sagittis purus sit amet volutpat. Netus
-		et malesuada fames ac turpis egestas. Eget magna fermentum iaculis eu non diam phasellus
-		vestibulum lorem. Varius sit amet mattis vulputate enim. Habitasse platea dictumst quisque
-		sagittis. Integer quis auctor elit sed vulputate mi. Dictumst quisque sagittis purus sit amet.
-	</p>
+<!doctype html>
 
-	<p>
-		Morbi tristique senectus et netus. Id semper risus in hendrerit gravida rutrum quisque non
-		tellus. Habitasse platea dictumst quisque sagittis purus sit amet. Tellus molestie nunc non
-		blandit massa. Cursus vitae congue mauris rhoncus. Accumsan tortor posuere ac ut. Fringilla urna
-		porttitor rhoncus dolor. Elit ullamcorper dignissim cras tincidunt lobortis. In cursus turpis
-		massa tincidunt dui ut ornare lectus. Integer feugiat scelerisque varius morbi enim nunc.
-		Bibendum neque egestas congue quisque egestas diam. Cras ornare arcu dui vivamus arcu felis
-		bibendum. Dignissim suspendisse in est ante in nibh mauris. Sed tempus urna et pharetra pharetra
-		massa massa ultricies mi.
-	</p>
+<html lang="en">
+  <head>
+    <BaseHead
+      title="About | The Reliability Loop"
+      description="About The Reliability Loop and Rahul Siddipeta."
+    />
 
-	<p>
-		Mollis nunc sed id semper risus in. Convallis a cras semper auctor neque. Diam sit amet nisl
-		suscipit. Lacus viverra vitae congue eu consequat ac felis donec. Egestas integer eget aliquet
-		nibh praesent tristique magna sit amet. Eget magna fermentum iaculis eu non diam. In vitae
-		turpis massa sed elementum. Tristique et egestas quis ipsum suspendisse ultrices. Eget lorem
-		dolor sed viverra ipsum. Vel turpis nunc eget lorem dolor sed viverra. Posuere ac ut consequat
-		semper viverra nam. Laoreet suspendisse interdum consectetur libero id faucibus. Diam phasellus
-		vestibulum lorem sed risus ultricies tristique. Rhoncus dolor purus non enim praesent elementum
-		facilisis. Ultrices tincidunt arcu non sodales neque. Tempus egestas sed sed risus pretium quam
-		vulputate. Viverra suspendisse potenti nullam ac tortor vitae purus faucibus ornare. Fringilla
-		urna porttitor rhoncus dolor purus non. Amet dictum sit amet justo donec enim.
-	</p>
+    <style>
+      .page-hero {
+        position: relative;
 
-	<p>
-		Mattis ullamcorper velit sed ullamcorper morbi tincidunt. Tortor posuere ac ut consequat semper
-		viverra. Tellus mauris a diam maecenas sed enim ut sem viverra. Venenatis urna cursus eget nunc
-		scelerisque viverra mauris in. Arcu ac tortor dignissim convallis aenean et tortor at. Curabitur
-		gravida arcu ac tortor dignissim convallis aenean et tortor. Egestas tellus rutrum tellus
-		pellentesque eu. Fusce ut placerat orci nulla pellentesque dignissim enim sit amet. Ut enim
-		blandit volutpat maecenas volutpat blandit aliquam etiam. Id donec ultrices tincidunt arcu. Id
-		cursus metus aliquam eleifend mi.
-	</p>
+        overflow: hidden;
 
-	<p>
-		Tempus quam pellentesque nec nam aliquam sem. Risus at ultrices mi tempus imperdiet. Id porta
-		nibh venenatis cras sed felis eget velit. Ipsum a arcu cursus vitae. Facilisis magna etiam
-		tempor orci eu lobortis elementum. Tincidunt dui ut ornare lectus sit. Quisque non tellus orci
-		ac. Blandit libero volutpat sed cras. Nec tincidunt praesent semper feugiat nibh sed pulvinar
-		proin gravida. Egestas integer eget aliquet nibh praesent tristique magna.
-	</p>
-</Layout>
+        padding: 82px 0 66px;
+
+        border-bottom: 1px solid var(--border);
+      }
+
+      .page-hero::before {
+        content: "";
+
+        position: absolute;
+
+        width: 400px;
+        height: 400px;
+
+        top: -250px;
+        right: -90px;
+
+        border-radius: 50%;
+
+        background: var(--lavender);
+
+        opacity: 0.35;
+      }
+
+      .page-hero::after {
+        content: "";
+
+        position: absolute;
+
+        width: 160px;
+        height: 160px;
+
+        top: -70px;
+        right: 230px;
+
+        border-radius: 50%;
+
+        background: var(--pink);
+
+        opacity: 0.1;
+      }
+
+      .hero-inner {
+        position: relative;
+        z-index: 1;
+      }
+
+      .page-title {
+        margin-top: 20px;
+      }
+
+      .about-section {
+        padding: 62px 0 95px;
+      }
+
+      .about-grid {
+        display: grid;
+
+        grid-template-columns: 220px minmax(0, 720px);
+
+        gap: 75px;
+      }
+
+      .side-label {
+        color: var(--purple);
+
+        font-size: 11px;
+        font-weight: 700;
+
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .side-line {
+        width: 45px;
+        height: 4px;
+
+        margin-top: 15px;
+
+        border-radius: 999px;
+
+        background: var(--purple);
+      }
+
+      .content {
+        color: var(--text-body);
+
+        font-size: 18px;
+        line-height: 1.7;
+      }
+
+      .content p {
+        margin: 0 0 1.15em;
+      }
+
+      .content h2 {
+        margin: 2.1em 0 0.7em;
+
+        color: var(--text);
+
+        font-size: 31px;
+        font-weight: 700;
+
+        line-height: 1.2;
+        letter-spacing: -0.03em;
+      }
+
+      .content h2:first-child {
+        margin-top: 0;
+      }
+
+      .principle {
+        margin: 30px 0;
+
+        padding: 25px 29px;
+
+        border-left: 5px solid var(--purple);
+        border-radius: 0 12px 12px 0;
+
+        background:
+          linear-gradient(
+            110deg,
+            var(--lavender-soft),
+            var(--wisteria-soft)
+          );
+
+        color: var(--text);
+
+        font-size: 20px;
+        font-weight: 700;
+
+        line-height: 1.5;
+      }
+
+      .topic-list {
+        display: flex;
+        flex-wrap: wrap;
+
+        gap: 9px;
+
+        margin-top: 22px;
+      }
+
+      .topic {
+        padding: 8px 12px;
+
+        border: 1px solid var(--wisteria);
+        border-radius: 999px;
+
+        background: var(--wisteria-soft);
+
+        color: #5c435f;
+
+        font-size: 12px;
+      }
+
+      @media (max-width: 760px) {
+        .page-hero {
+          padding: 62px 0 50px;
+        }
+
+        .about-section {
+          padding: 48px 0 70px;
+        }
+
+        .about-grid {
+          grid-template-columns: 1fr;
+
+          gap: 30px;
+        }
+
+        .content {
+          font-size: 17px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <Header />
+
+    <main>
+      <section class="page-hero">
+        <div class="site-container hero-inner">
+          <div class="eyebrow">
+            About the Publication
+          </div>
+
+          <h1 class="page-title">
+            The Reliability Loop
+          </h1>
+
+          <p class="page-description">
+            A technical publication about engineering systems
+            that have to survive real production conditions.
+          </p>
+        </div>
+      </section>
+
+      <section class="about-section">
+        <div class="site-container about-grid">
+          <aside>
+            <div class="side-label">
+              Written by
+            </div>
+
+            <div class="side-line"></div>
+          </aside>
+
+          <div class="content">
+            <h2>
+              Hi, I'm Rahul.
+            </h2>
+
+            <p>
+              I'm a Site Reliability Engineer interested in the
+              systems, practices and engineering decisions that
+              make production infrastructure more reliable,
+              understandable and recoverable.
+            </p>
+
+            <p>
+              The Reliability Loop is where I write about the
+              intersection of reliability engineering, platform
+              engineering, distributed systems, observability
+              and automation.
+            </p>
+
+            <div class="principle">
+              Reliability isn't a destination. It's a continuous
+              loop of observing, understanding, acting,
+              verifying and learning.
+            </div>
+
+            <h2>
+              Why this exists
+            </h2>
+
+            <p>
+              Production systems rarely fail in perfectly
+              predictable ways. Real reliability work happens
+              when architecture, telemetry, operational
+              judgment and automation meet unexpected
+              conditions.
+            </p>
+
+            <p>
+              I'm particularly interested in how AI changes that
+              operating model — not simply by generating
+              summaries or suggesting commands, but by helping
+              systems understand incidents, make constrained
+              decisions, verify outcomes and learn from what
+              happened.
+            </p>
+
+            <h2>
+              What I write about
+            </h2>
+
+            <div class="topic-list">
+              <span class="topic">SRE</span>
+              <span class="topic">Platform Engineering</span>
+              <span class="topic">Distributed Systems</span>
+              <span class="topic">Observability</span>
+              <span class="topic">AI & Automation</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <Footer />
+  </body>
+</html>

@@ -1,0 +1,220 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const topics = [
+  {
+    id: 'sre',
+    name: 'SRE',
+    number: '01',
+    description:
+      'Incident response, SLOs, failure management, operational maturity and the engineering practices behind reliable production systems.',
+  },
+  {
+    id: 'platform-engineering',
+    name: 'Platform Engineering',
+    number: '02',
+    description:
+      'Internal platforms, developer experience, infrastructure abstractions and the systems that help engineering teams move safely at scale.',
+  },
+  {
+    id: 'distributed-systems',
+    name: 'Distributed Systems',
+    number: '03',
+    description:
+      'Failure modes, resilience, scaling behavior and the architectural tradeoffs that appear when systems span machines, regions and services.',
+  },
+  {
+    id: 'observability',
+    name: 'Observability',
+    number: '04',
+    description:
+      'Logs, metrics, traces, telemetry design and the context engineers — and increasingly AI systems — need to understand production.',
+  },
+  {
+    id: 'ai-and-automation',
+    name: 'AI & Automation',
+    number: '05',
+    description:
+      'How automation evolves toward autonomous operations while preserving confidence, verification, blast-radius controls and human judgment.',
+  },
+];
+---
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <BaseHead
+      title="Topics | The Reliability Loop"
+      description="Explore reliability engineering, platform engineering, distributed systems, observability, AI and automation."
+    />
+
+    <style>
+      .page-hero {
+        position: relative;
+
+        overflow: hidden;
+
+        padding: 82px 0 66px;
+
+        border-bottom: 1px solid var(--border);
+      }
+
+      .page-hero::before {
+        content: "";
+
+        position: absolute;
+
+        width: 380px;
+        height: 380px;
+
+        top: -230px;
+        right: -80px;
+
+        border-radius: 50%;
+
+        background: var(--wisteria);
+
+        opacity: 0.28;
+      }
+
+      .hero-inner {
+        position: relative;
+        z-index: 1;
+      }
+
+      .page-title {
+        margin-top: 20px;
+      }
+
+      .topics-section {
+        padding: 60px 0 95px;
+      }
+
+      .topic {
+        scroll-margin-top: 30px;
+
+        display: grid;
+
+        grid-template-columns: 70px 260px 1fr;
+
+        gap: 35px;
+
+        padding: 38px 0;
+
+        border-bottom: 1px solid var(--border);
+      }
+
+      .topic:first-child {
+        border-top: 1px solid var(--border);
+      }
+
+      .number {
+        color: var(--purple);
+
+        font-size: 12px;
+        font-weight: 700;
+
+        letter-spacing: 0.12em;
+      }
+
+      .topic h2 {
+        margin: 0;
+
+        color: var(--text);
+
+        font-size: 29px;
+        font-weight: 700;
+
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+      }
+
+      .topic p {
+        max-width: 620px;
+
+        margin: 0;
+
+        color: var(--text-muted);
+
+        font-size: 16px;
+        line-height: 1.65;
+      }
+
+      @media (max-width: 760px) {
+        .page-hero {
+          padding: 62px 0 50px;
+        }
+
+        .topics-section {
+          padding: 48px 0 70px;
+        }
+
+        .topic {
+          grid-template-columns: 45px 1fr;
+
+          gap: 14px 20px;
+
+          padding: 30px 0;
+        }
+
+        .topic p {
+          grid-column: 2;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <Header />
+
+    <main>
+      <section class="page-hero">
+        <div class="site-container hero-inner">
+          <div class="eyebrow">
+            Explore the Loop
+          </div>
+
+          <h1 class="page-title">
+            Topics
+          </h1>
+
+          <p class="page-description">
+            The engineering disciplines behind systems that
+            remain understandable, recoverable and reliable
+            under real production conditions.
+          </p>
+        </div>
+      </section>
+
+      <section class="topics-section">
+        <div class="site-container">
+          {
+            topics.map((topic) => (
+              <article
+                class="topic"
+                id={topic.id}
+              >
+                <div class="number">
+                  {topic.number}
+                </div>
+
+                <h2>
+                  {topic.name}
+                </h2>
+
+                <p>
+                  {topic.description}
+                </p>
+              </article>
+            ))
+          }
+        </div>
+      </section>
+    </main>
+
+    <Footer />
+  </body>
+</html>
