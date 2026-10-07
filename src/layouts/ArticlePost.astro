@@ -31,6 +31,16 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
   year: 'numeric',
   timeZone: 'UTC',
 });
+
+const categoryThemeMap: Record<string, string> = {
+  'SRE': 'sre',
+  'Platform Engineering': 'platform',
+  'Distributed Systems': 'distributed',
+  'Observability': 'observability',
+  'AI & Automation': 'ai',
+};
+
+const theme = categoryThemeMap[category] ?? 'sre';
 ---
 
 <!doctype html>
@@ -43,12 +53,98 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
     />
 
     <style is:global>
+      /*
+       * CATEGORY THEMES
+       *
+       * SRE                  → Wisteria / Purple
+       * Platform Engineering → Cyan / Blue
+       * Distributed Systems  → Amber / Orange
+       * Observability        → Emerald / Teal
+       * AI & Automation      → Violet / Pink
+       */
+
+      .article-theme {
+        --article-accent: #9400d3;
+        --article-accent-dark: #7000a3;
+        --article-accent-soft: #eeeeff;
+        --article-accent-soft-2: #f2eaf2;
+        --article-accent-border: #d8bfd8;
+        --article-accent-muted: #b989c8;
+        --article-orb-primary: #d3d3ff;
+        --article-orb-secondary: #d8bfd8;
+        --article-end-secondary: #ed80e9;
+        --article-code-bg: #f2eaf2;
+        --article-code-text: #7000a3;
+      }
+
+      .article-theme[data-theme="platform"] {
+        --article-accent: #087fdb;
+        --article-accent-dark: #075fa4;
+        --article-accent-soft: #eaf6ff;
+        --article-accent-soft-2: #edf9fc;
+        --article-accent-border: #a9d9f5;
+        --article-accent-muted: #75b9e6;
+        --article-orb-primary: #b9ddff;
+        --article-orb-secondary: #9de4ed;
+        --article-end-secondary: #22b8cf;
+        --article-code-bg: #edf7fd;
+        --article-code-text: #075fa4;
+      }
+
+      .article-theme[data-theme="distributed"] {
+        --article-accent: #d97706;
+        --article-accent-dark: #a84f04;
+        --article-accent-soft: #fff5df;
+        --article-accent-soft-2: #fff8eb;
+        --article-accent-border: #f1c77c;
+        --article-accent-muted: #e0a64c;
+        --article-orb-primary: #ffe1a6;
+        --article-orb-secondary: #ffd0a1;
+        --article-end-secondary: #f05a28;
+        --article-code-bg: #fff5e6;
+        --article-code-text: #9a4a05;
+      }
+
+      .article-theme[data-theme="observability"] {
+        --article-accent: #07876f;
+        --article-accent-dark: #056553;
+        --article-accent-soft: #e7f8f3;
+        --article-accent-soft-2: #edf9f5;
+        --article-accent-border: #9bd9c8;
+        --article-accent-muted: #62bca5;
+        --article-orb-primary: #b6eadc;
+        --article-orb-secondary: #a9e5d9;
+        --article-end-secondary: #1ba6a6;
+        --article-code-bg: #eaf8f4;
+        --article-code-text: #056553;
+      }
+
+      .article-theme[data-theme="ai"] {
+        --article-accent: #8b36d9;
+        --article-accent-dark: #6923ad;
+        --article-accent-soft: #f1eafe;
+        --article-accent-soft-2: #fbeafa;
+        --article-accent-border: #d7b9ed;
+        --article-accent-muted: #bd8dd9;
+        --article-orb-primary: #d8ccff;
+        --article-orb-secondary: #f1c5ea;
+        --article-end-secondary: #ed80e9;
+        --article-code-bg: #f3edfd;
+        --article-code-text: #6923ad;
+      }
+
       .article-hero {
         position: relative;
-
         overflow: hidden;
 
         border-bottom: 1px solid var(--border);
+
+        background:
+          linear-gradient(
+            135deg,
+            var(--background) 0%,
+            var(--article-accent-soft) 145%
+          );
       }
 
       .article-hero::before {
@@ -64,9 +160,9 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
 
         border-radius: 50%;
 
-        background: var(--lavender);
+        background: var(--article-orb-primary);
 
-        opacity: 0.38;
+        opacity: 0.42;
 
         pointer-events: none;
       }
@@ -84,9 +180,9 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
 
         border-radius: 50%;
 
-        background: var(--wisteria);
+        background: var(--article-orb-secondary);
 
-        opacity: 0.2;
+        opacity: 0.25;
 
         pointer-events: none;
       }
@@ -108,7 +204,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
 
         gap: 9px;
 
-        color: var(--purple);
+        color: var(--article-accent);
 
         font-size: 12px;
         font-weight: 700;
@@ -125,7 +221,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
 
         border-radius: 999px;
 
-        background: var(--purple);
+        background: var(--article-accent);
       }
 
       .article-title {
@@ -177,7 +273,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
 
         margin: 0 13px;
 
-        color: var(--wisteria);
+        color: var(--article-accent-muted);
       }
 
       .article-metadata .author {
@@ -237,7 +333,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
 
         border-radius: 999px;
 
-        background: var(--purple);
+        background: var(--article-accent);
       }
 
       .article-body h3 {
@@ -263,9 +359,9 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
       }
 
       .article-body a {
-        color: var(--purple);
+        color: var(--article-accent);
 
-        text-decoration-color: var(--wisteria);
+        text-decoration-color: var(--article-accent-border);
         text-decoration-thickness: 1px;
         text-underline-offset: 4px;
 
@@ -273,7 +369,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
       }
 
       .article-body a:hover {
-        color: var(--purple-dark);
+        color: var(--article-accent-dark);
       }
 
       .article-body blockquote {
@@ -284,14 +380,14 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
         padding: 24px 32px 24px 34px;
 
         border: 0;
-        border-left: 5px solid var(--purple);
+        border-left: 5px solid var(--article-accent);
         border-radius: 0 12px 12px 0;
 
         background:
           linear-gradient(
             110deg,
-            var(--lavender-soft),
-            var(--wisteria-soft)
+            var(--article-accent-soft),
+            var(--article-accent-soft-2)
           );
 
         color: var(--text);
@@ -310,14 +406,14 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
         top: 7px;
         right: 18px;
 
-        color: var(--wisteria);
+        color: var(--article-accent-border);
 
         font-family: Georgia, serif;
         font-size: 64px;
 
         line-height: 1;
 
-        opacity: 0.7;
+        opacity: 0.8;
       }
 
       .article-body blockquote p {
@@ -343,18 +439,18 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
       }
 
       .article-body li::marker {
-        color: var(--purple);
+        color: var(--article-accent);
       }
 
       .article-body code {
         padding: 0.15em 0.38em;
 
-        border: 1px solid var(--border);
+        border: 1px solid var(--article-accent-border);
         border-radius: 5px;
 
-        background: var(--wisteria-soft);
+        background: var(--article-code-bg);
 
-        color: var(--purple-dark);
+        color: var(--article-code-text);
 
         font-family:
           "SFMono-Regular",
@@ -423,7 +519,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
       }
 
       .article-body th {
-        background: var(--wisteria-soft);
+        background: var(--article-accent-soft);
 
         color: var(--text);
 
@@ -456,12 +552,12 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
       .article-tag {
         padding: 7px 11px;
 
-        border: 1px solid var(--wisteria);
+        border: 1px solid var(--article-accent-border);
         border-radius: 999px;
 
-        background: var(--wisteria-soft);
+        background: var(--article-accent-soft);
 
-        color: #5c435f;
+        color: var(--article-accent-dark);
 
         font-size: 11px;
         font-weight: 700;
@@ -497,7 +593,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
 
         border-radius: 999px;
 
-        background: var(--purple);
+        background: var(--article-accent);
       }
 
       .article-end::after {
@@ -508,7 +604,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
 
         border-radius: 50%;
 
-        background: var(--pink);
+        background: var(--article-end-secondary);
       }
 
       @media (max-width: 760px) {
@@ -581,7 +677,7 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
         }
 
         .article-hero::before {
-          opacity: 0.2;
+          opacity: 0.22;
         }
 
         .article-hero::after {
@@ -595,7 +691,10 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
     <Header />
 
     <main>
-      <article>
+      <article
+        class="article-theme"
+        data-theme={theme}
+      >
         <section class="article-hero">
           <div class="article-header">
             <div class="article-category">
@@ -655,7 +754,6 @@ const formattedUpdatedDate = updatedDate?.toLocaleDateString('en-US', {
         </div>
       </article>
     </main>
-
     <Footer />
   </body>
 </html>
