@@ -4,8 +4,13 @@ import type { CollectionEntry } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import ArticleEngagement from '../components/ArticleEngagement.astro';
+import ArticleComments from '../components/ArticleComments.astro';
 
-type Props = CollectionEntry<'articles'>['data'];
+type Props =
+  CollectionEntry<'articles'>['data'] & {
+    slug: string;
+  };
 
 const {
   title,
@@ -16,6 +21,7 @@ const {
   category,
   tags,
   readTime,
+  slug,
 } = Astro.props;
 
 const formattedDate = pubDate.toLocaleDateString('en-US', {
@@ -730,6 +736,7 @@ const theme = categoryThemeMap[category] ?? 'sre';
                 )
               }
             </div>
+            <ArticleEngagement slug={slug} />
           </div>
         </section>
 
@@ -752,6 +759,9 @@ const theme = categoryThemeMap[category] ?? 'sre';
         <div class="article-end">
           End of article
         </div>
+
+        <ArticleComments slug={slug} />
+
       </article>
     </main>
     <Footer />

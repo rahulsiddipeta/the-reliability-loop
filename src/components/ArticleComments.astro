@@ -1,0 +1,964 @@
+---
+interface Props {
+  slug: string;
+}
+
+const { slug } = Astro.props;
+
+const API =
+  'https://reliability-loop-engagement.rahul-siddipeta.workers.dev';
+
+/*
+ * PUBLIC Turnstile site key.
+ *
+ * This is safe to expose in frontend code.
+ * Never put the Turnstile SECRET key here.
+ */
+const TURNSTILE_SITE_KEY =
+  '0x4AAAAAAFQmwmiKRPHg4Ry2';
+---
+
+<script
+  src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+  async
+  defer
+></script>
+
+<section
+  class="article-comments"
+  data-article-comments
+  data-slug={slug}
+  data-api={API}
+>
+  <div class="discussion-heading">
+    <div>
+      <span class="discussion-kicker">
+        Discussion
+      </span>
+
+      <h2>Join the conversation</h2>
+    </div>
+
+    <span
+      class="comment-count"
+      data-comment-count
+    >
+      0 comments
+    </span>
+  </div>
+
+  <div
+    class="comments-list"
+    data-comments-list
+  >
+    <p class="comments-empty">
+      No comments yet. Start the discussion.
+    </p>
+  </div>
+
+  <div class="comment-form-wrap">
+    <div class="comment-form-heading">
+      <h3>Share your thoughts</h3>
+
+      <p>
+        Your email is used only for moderation
+        and will never be displayed publicly.
+      </p>
+    </div>
+
+    <form
+      class="comment-form"
+      data-comment-form
+    >
+      <div class="comment-fields">
+        <label>
+          <span>Name</span>
+
+          <input
+            type="text"
+            name="name"
+            maxlength="80"
+            autocomplete="name"
+            required
+            placeholder="Your name"
+          />
+        </label>
+
+        <label>
+          <span>Email</span>
+
+          <input
+            type="email"
+            name="email"
+            maxlength="254"
+            autocomplete="email"
+            required
+            placeholder="you@example.com"
+          />
+        </label>
+      </div>
+
+      <label class="comment-body-field">
+        <span>Comment</span>
+
+        <textarea
+          name="body"
+          maxlength="2000"
+          rows="5"
+          required
+          placeholder="Add to the discussion..."
+        ></textarea>
+      </label>
+
+      <div class="turnstile-wrap">
+        <div
+          class="cf-turnstile"
+          data-sitekey={TURNSTILE_SITE_KEY}
+          data-theme="light"
+          data-size="flexible"
+        ></div>
+      </div>
+
+      <div class="comment-submit-row">
+        <p
+          class="comment-status"
+          data-comment-status
+          aria-live="polite"
+        ></p>
+
+        <button
+          class="comment-submit"
+          type="submit"
+        >
+          Post comment
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<script>
+  const commentSections =
+    document.querySelectorAll(
+      '[data-article-comments]'
+    );
+
+  commentSections.forEach(
+    (section) => {
+      if (
+        !(section instanceof HTMLElement)
+      ) {
+        return;
+      }
+
+      const slug =
+        section.dataset.slug;
+
+      const api =
+        section.dataset.api;
+
+      if (!slug || !api) {
+        return;
+      }
+
+      const commentsList =
+        section.querySelector(
+          '[data-comments-list]'
+        );
+
+      const commentCount =
+        section.querySelector(
+          '[data-comment-count]'
+        );
+
+      const form =
+        section.querySelector(
+          '[data-comment-form]'
+        );
+
+      const status =
+        section.querySelector(
+          '[data-comment-status]'
+        );
+
+      const storageKey =
+        'reliability-loop-visitor-id';
+
+      let visitorId =
+        localStorage.getItem(
+          storageKey
+        );
+
+      if (!visitorId) {
+        visitorId =
+          crypto.randomUUID();
+
+        localStorage.setItem(
+          storageKey,
+          visitorId
+        );
+      }
+
+      const formatDate = (
+        value
+      ) => {
+        if (!value) {
+          return '';
+        }
+
+        const normalized =
+          String(value).includes(
+            'T'
+          )
+            ? String(value)
+            : String(value).replace(
+                ' ',
+                'T'
+              ) + 'Z';
+
+        const date =
+          new Date(normalized);
+
+        if (
+          Number.isNaN(
+            date.getTime()
+          )
+        ) {
+          return '';
+        }
+
+        return new Intl.DateTimeFormat(
+          'en-US',
+          {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          }
+        ).format(date);
+      };
+
+      const renderComments = (
+        comments
+      ) => {
+        const list =
+          Array.isArray(comments)
+            ? comments
+            : [];
+
+        if (commentCount) {
+          commentCount.textContent =
+            `${list.length} ${
+              list.length === 1
+                ? 'comment'
+                : 'comments'
+            }`;
+        }
+
+        if (!commentsList) {
+          return;
+        }
+
+        commentsList.innerHTML = '';
+
+        if (
+          list.length === 0
+        ) {
+          const empty =
+            document.createElement(
+              'p'
+            );
+
+          empty.className =
+            'comments-empty';
+
+          empty.textContent =
+            'No comments yet. Start the discussion.';
+
+          commentsList.appendChild(
+            empty
+          );
+
+          return;
+        }
+
+        list.forEach(
+          (comment) => {
+            const article =
+              document.createElement(
+                'article'
+              );
+
+            article.className =
+              'comment';
+
+            const content =
+              document.createElement(
+                'div'
+              );
+
+            content.className =
+              'comment-content';
+
+            const meta =
+              document.createElement(
+                'div'
+              );
+
+            meta.className =
+              'comment-meta';
+
+            const name =
+              document.createElement(
+                'strong'
+              );
+
+            name.textContent =
+              String(
+                comment.name || ''
+              );
+
+            const date =
+              document.createElement(
+                'span'
+              );
+
+            date.textContent =
+              formatDate(
+                comment.created_at
+              );
+
+            const body =
+              document.createElement(
+                'p'
+              );
+
+            /*
+             * textContent is intentional.
+             *
+             * User comments are never rendered
+             * as HTML.
+             */
+            body.textContent =
+              String(
+                comment.body || ''
+              );
+
+            meta.appendChild(
+              name
+            );
+
+            meta.appendChild(
+              date
+            );
+
+            content.appendChild(
+              meta
+            );
+
+            content.appendChild(
+              body
+            );
+
+            article.appendChild(
+              content
+            );
+
+            commentsList.appendChild(
+              article
+            );
+          }
+        );
+      };
+
+      const loadComments =
+        async () => {
+          try {
+            const params =
+              new URLSearchParams(
+                {
+                  slug,
+                  visitorId,
+                }
+              );
+
+            const response =
+              await fetch(
+                `${api}/api/engagement?${params}`
+              );
+
+            const data =
+              await response.json();
+
+            if (!response.ok) {
+              throw new Error(
+                data.error ||
+                  'Unable to load comments.'
+              );
+            }
+
+            renderComments(
+              data.comments
+            );
+          } catch (error) {
+            console.error(
+              'Unable to load comments:',
+              error
+            );
+          }
+        };
+
+      loadComments();
+
+      if (
+        form instanceof
+        HTMLFormElement
+      ) {
+        form.addEventListener(
+          'submit',
+          async (event) => {
+            event.preventDefault();
+
+            const submitButton =
+              form.querySelector(
+                'button[type="submit"]'
+              );
+
+            if (status) {
+              status.textContent =
+                '';
+
+              status.classList.remove(
+                'is-success',
+                'is-error'
+              );
+            }
+
+            const formData =
+              new FormData(form);
+
+            const turnstileToken =
+              formData.get(
+                'cf-turnstile-response'
+              );
+
+            if (
+              !turnstileToken
+            ) {
+              if (status) {
+                status.textContent =
+                  'Please complete the security check.';
+
+                status.classList.add(
+                  'is-error'
+                );
+              }
+
+              return;
+            }
+
+            if (
+              submitButton instanceof
+              HTMLButtonElement
+            ) {
+              submitButton.disabled =
+                true;
+
+              submitButton.textContent =
+                'Posting...';
+            }
+
+            try {
+              const response =
+                await fetch(
+                  `${api}/api/comments`,
+                  {
+                    method:
+                      'POST',
+
+                    headers: {
+                      'Content-Type':
+                        'application/json',
+                    },
+
+                    body:
+                      JSON.stringify(
+                        {
+                          slug,
+
+                          name:
+                            formData.get(
+                              'name'
+                            ),
+
+                          email:
+                            formData.get(
+                              'email'
+                            ),
+
+                          body:
+                            formData.get(
+                              'body'
+                            ),
+
+                          turnstileToken:
+                            String(
+                              turnstileToken
+                            ),
+                        }
+                      ),
+                  }
+                );
+
+              const data =
+                await response.json();
+
+              if (
+                !response.ok
+              ) {
+                throw new Error(
+                  data.error ||
+                    'Unable to post comment.'
+                );
+              }
+
+              form.reset();
+
+              if (status) {
+                status.textContent =
+                  data.message;
+
+                status.classList.add(
+                  'is-success'
+                );
+              }
+
+              /*
+               * Turnstile tokens are single-use.
+               * Reset the widget after a successful
+               * submission so another comment can
+               * receive a fresh token.
+               */
+              if (
+                window.turnstile
+              ) {
+                window.turnstile.reset();
+              }
+            } catch (error) {
+              if (status) {
+                status.textContent =
+                  error instanceof Error
+                    ? error.message
+                    : 'Unable to post your comment.';
+
+                status.classList.add(
+                  'is-error'
+                );
+              }
+
+              /*
+               * Verification may have consumed or
+               * invalidated the token.
+               */
+              if (
+                window.turnstile
+              ) {
+                window.turnstile.reset();
+              }
+            } finally {
+              if (
+                submitButton instanceof
+                HTMLButtonElement
+              ) {
+                submitButton.disabled =
+                  false;
+
+                submitButton.textContent =
+                  'Post comment';
+              }
+            }
+          }
+        );
+      }
+    }
+  );
+</script>
+
+<style is:global>
+  .article-comments {
+    width: min(
+      var(--content-width),
+      calc(100% - 48px)
+    );
+
+    margin: 54px auto 90px;
+
+    padding-top: 45px;
+
+    border-top:
+      1px solid var(--border);
+  }
+
+  .discussion-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content:
+      space-between;
+
+    gap: 24px;
+
+    margin-bottom: 28px;
+  }
+
+  .discussion-kicker {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color:
+      var(--article-accent);
+
+    font-size: 11px;
+    font-weight: 700;
+
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .discussion-heading h2 {
+    margin: 0;
+
+    color: var(--text);
+
+    font-size: 30px;
+    font-weight: 700;
+
+    line-height: 1.15;
+
+    letter-spacing: -0.035em;
+  }
+
+  .comment-count {
+    padding-bottom: 3px;
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+  }
+
+  .comments-list {
+    margin-bottom: 34px;
+  }
+
+  .comments-empty {
+    margin: 0;
+
+    padding: 24px;
+
+    border:
+      1px dashed
+      var(--article-accent-border);
+
+    border-radius: 12px;
+
+    background:
+      var(--article-accent-soft);
+
+    color: var(--text-muted);
+
+    font-size: 14px;
+  }
+
+  .comment {
+    padding: 22px 0;
+
+    border-bottom:
+      1px solid var(--border);
+  }
+
+  .comment:first-child {
+    border-top:
+      1px solid var(--border);
+  }
+
+  .comment-content {
+    min-width: 0;
+  }
+
+  .comment-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+
+    column-gap: 14px;
+    row-gap: 4px;
+
+    margin-bottom: 12px;
+  }
+
+  .comment-meta strong {
+    color: var(--text);
+
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .comment-meta span {
+    color: var(--text-muted);
+
+    font-size: 12px;
+  }
+
+  .comment-content p {
+    margin: 0;
+
+    color: var(--text-body);
+
+    font-size: 15px;
+    line-height: 1.6;
+
+    white-space: pre-wrap;
+
+    overflow-wrap: anywhere;
+  }
+
+  .comment-form-wrap {
+    padding: 28px;
+
+    border:
+      1px solid
+      var(--article-accent-border);
+
+    border-radius: 14px;
+
+    background:
+      linear-gradient(
+        135deg,
+        var(--article-accent-soft),
+        #ffffff 80%
+      );
+  }
+
+  .comment-form-heading {
+    margin-bottom: 23px;
+  }
+
+  .comment-form-heading h3 {
+    margin: 0 0 6px;
+
+    color: var(--text);
+
+    font-size: 21px;
+    font-weight: 700;
+
+    letter-spacing: -0.02em;
+  }
+
+  .comment-form-heading p {
+    margin: 0;
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+
+    line-height: 1.5;
+  }
+
+  .comment-fields {
+    display: grid;
+
+    grid-template-columns:
+      1fr 1fr;
+
+    gap: 16px;
+  }
+
+  .comment-form label {
+    display: block;
+  }
+
+  .comment-form label > span {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: var(--text);
+
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .comment-form input,
+  .comment-form textarea {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    border:
+      1px solid var(--border);
+
+    border-radius: 9px;
+
+    background: #ffffff;
+
+    color: var(--text);
+
+    font: inherit;
+    font-size: 14px;
+
+    outline: none;
+
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease;
+  }
+
+  .comment-form input {
+    height: 43px;
+
+    padding: 0 13px;
+  }
+
+  .comment-form textarea {
+    min-height: 125px;
+
+    padding: 12px 13px;
+
+    resize: vertical;
+
+    line-height: 1.55;
+  }
+
+  .comment-form input:focus,
+  .comment-form textarea:focus {
+    border-color:
+      var(--article-accent);
+
+    box-shadow:
+      0 0 0 3px
+      var(--article-accent-soft);
+  }
+
+  .comment-body-field {
+    margin-top: 16px;
+  }
+
+  .turnstile-wrap {
+    margin-top: 18px;
+  }
+
+  .comment-submit-row {
+    display: flex;
+    align-items: center;
+    justify-content:
+      space-between;
+
+    gap: 18px;
+
+    margin-top: 17px;
+  }
+
+  .comment-status {
+    margin: 0;
+
+    color: var(--text-muted);
+
+    font-size: 12px;
+
+    line-height: 1.4;
+  }
+
+  .comment-status.is-success {
+    color: #08765f;
+  }
+
+  .comment-status.is-error {
+    color: #b42318;
+  }
+
+  .comment-submit {
+    flex-shrink: 0;
+
+    padding: 11px 18px;
+
+    border: 0;
+    border-radius: 8px;
+
+    background:
+      var(--article-accent);
+
+    color: #ffffff;
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+      background 150ms ease,
+      transform 150ms ease;
+  }
+
+  .comment-submit:hover {
+    background:
+      var(--article-accent-dark);
+  }
+
+  .comment-submit:active {
+    transform:
+      translateY(1px);
+  }
+
+  .comment-submit:disabled {
+    cursor: wait;
+
+    opacity: 0.65;
+  }
+
+  @media (
+    max-width: 760px
+  ) {
+    .article-comments {
+      width:
+        calc(100% - 32px);
+
+      margin-top: 44px;
+
+      padding-top: 38px;
+    }
+
+    .discussion-heading {
+      align-items:
+        flex-start;
+
+      flex-direction:
+        column;
+
+      gap: 8px;
+    }
+
+    .discussion-heading h2 {
+      font-size: 27px;
+    }
+
+    .comment-form-wrap {
+      padding: 22px 18px;
+    }
+
+    .comment-fields {
+      grid-template-columns:
+        1fr;
+    }
+
+    .comment-submit-row {
+      align-items: stretch;
+
+      flex-direction:
+        column;
+    }
+
+    .comment-submit {
+      width: 100%;
+    }
+  }
+</style>

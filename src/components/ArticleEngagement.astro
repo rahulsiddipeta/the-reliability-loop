@@ -1,0 +1,348 @@
+---
+interface Props {
+  slug: string;
+}
+
+const { slug } = Astro.props;
+
+const API =
+  'https://reliability-loop-engagement.rahul-siddipeta.workers.dev';
+---
+
+<div
+  class="article-engagement"
+  data-article-engagement
+  data-slug={slug}
+  data-api={API}
+>
+  <div class="engagement-item">
+    <svg
+        class="view-icon"
+        viewBox="0 0 24 24"
+        width="17"
+        height="17"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+        >
+        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" />
+        <circle cx="12" cy="12" r="2.5" />
+    </svg>
+    <strong data-view-count>—</strong>
+    <span data-view-label>views</span>
+  </div>
+
+  <span class="engagement-divider" aria-hidden="true"></span>
+
+  <button
+    class="article-like-button"
+    type="button"
+    data-like-button
+    aria-pressed="false"
+  >
+    <span class="like-icon" data-like-icon aria-hidden="true">♡</span>
+    <strong data-like-count>—</strong>
+    <span data-like-label>likes</span>
+  </button>
+</div>
+
+<script>
+  const sections = document.querySelectorAll(
+    '[data-article-engagement]'
+  );
+
+  sections.forEach((section) => {
+    if (!(section instanceof HTMLElement)) return;
+
+    const slug = section.dataset.slug;
+    const api = section.dataset.api;
+
+    if (!slug || !api) return;
+
+    const viewCount =
+      section.querySelector('[data-view-count]');
+
+    const viewLabel =
+      section.querySelector('[data-view-label]');
+
+    const likeButton =
+      section.querySelector('[data-like-button]');
+
+    const likeIcon =
+      section.querySelector('[data-like-icon]');
+
+    const likeCount =
+      section.querySelector('[data-like-count]');
+
+    const likeLabel =
+      section.querySelector('[data-like-label]');
+
+    const storageKey =
+      'reliability-loop-visitor-id';
+
+    let visitorId =
+      localStorage.getItem(storageKey);
+
+    if (!visitorId) {
+      visitorId = crypto.randomUUID();
+
+      localStorage.setItem(
+        storageKey,
+        visitorId
+      );
+    }
+
+    const render = (data) => {
+      const views = Number(data.views || 0);
+      const likes = Number(data.likes || 0);
+
+      if (viewCount) {
+        viewCount.textContent =
+          views.toLocaleString();
+      }
+
+      if (viewLabel) {
+        viewLabel.textContent =
+          views === 1 ? 'view' : 'views';
+      }
+
+      if (likeCount) {
+        likeCount.textContent =
+          likes.toLocaleString();
+      }
+
+      if (likeLabel) {
+        likeLabel.textContent =
+          likes === 1 ? 'like' : 'likes';
+      }
+
+      if (
+        likeButton instanceof HTMLButtonElement
+      ) {
+        likeButton.setAttribute(
+          'aria-pressed',
+          data.liked ? 'true' : 'false'
+        );
+
+        likeButton.classList.toggle(
+          'is-liked',
+          Boolean(data.liked)
+        );
+      }
+
+      if (likeIcon) {
+        likeIcon.textContent =
+          data.liked ? '♥' : '♡';
+      }
+    };
+
+    const request = async (
+      path,
+      options = {}
+    ) => {
+      const response = await fetch(
+        `${api}${path}`,
+        options
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            'Something went wrong.'
+        );
+      }
+
+      return data;
+    };
+
+    const recordView = async () => {
+      try {
+        const data = await request(
+          '/api/view',
+          {
+            method: 'POST',
+
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body: JSON.stringify({
+              slug,
+              visitorId,
+            }),
+          }
+        );
+
+        render(data);
+      } catch (error) {
+        console.error(
+          'Unable to load engagement:',
+          error
+        );
+      }
+    };
+
+    recordView();
+
+    if (
+      likeButton instanceof HTMLButtonElement
+    ) {
+      likeButton.addEventListener(
+        'click',
+        async () => {
+          likeButton.disabled = true;
+
+          try {
+            const data = await request(
+              '/api/like',
+              {
+                method: 'POST',
+
+                headers: {
+                  'Content-Type':
+                    'application/json',
+                },
+
+                body: JSON.stringify({
+                  slug,
+                  visitorId,
+                }),
+              }
+            );
+
+            render(data);
+          } catch (error) {
+            console.error(
+              'Unable to update like:',
+              error
+            );
+          } finally {
+            likeButton.disabled = false;
+          }
+        }
+      );
+    }
+  });
+</script>
+
+<style>
+  .article-engagement {
+    display: flex;
+    align-items: center;
+
+    gap: 14px;
+
+    margin-top: 19px;
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+  }
+
+  .engagement-item,
+  .article-like-button {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 6px;
+  }
+
+  .engagement-item strong,
+  .article-like-button strong {
+    color: var(--text);
+
+    font-weight: 700;
+  }
+
+.view-icon {
+  display: block;
+
+  width: 17px;
+  height: 17px;
+
+  color: var(--article-accent);
+}
+
+  .engagement-divider {
+    width: 1px;
+    height: 15px;
+
+    background: var(--border);
+  }
+
+  .article-like-button {
+    padding: 6px 10px;
+
+    border: 1px solid transparent;
+    border-radius: 999px;
+
+    background: transparent;
+
+    color: var(--text-muted);
+
+    font: inherit;
+
+    cursor: pointer;
+
+    transition:
+      color 150ms ease,
+      background 150ms ease,
+      border-color 150ms ease,
+      transform 150ms ease;
+  }
+
+  .article-like-button:hover {
+    color: var(--article-accent);
+
+    background:
+      var(--article-accent-soft);
+
+    border-color:
+      var(--article-accent-border);
+  }
+
+  .article-like-button.is-liked {
+    color: var(--article-accent);
+
+    background:
+      var(--article-accent-soft);
+
+    border-color:
+      var(--article-accent-border);
+  }
+
+  .article-like-button.is-liked strong {
+    color: var(--article-accent-dark);
+  }
+
+  .article-like-button:active {
+    transform: scale(0.97);
+  }
+
+  .article-like-button:disabled {
+    opacity: 0.6;
+
+    cursor: wait;
+  }
+
+  .like-icon {
+    min-width: 16px;
+
+    color: var(--article-accent);
+
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  @media (max-width: 640px) {
+    .article-engagement {
+      margin-top: 16px;
+    }
+  }
+</style>

@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+
+  "name": "reliability-loop-engagement",
+
+  "main": "worker/index.js",
+
+  "compatibility_date": "2026-10-07",
+
+  "d1_databases": [
+    {
+      "binding": "reliability_loop_db",
+      "database_name": "reliability-loop-db",
+      "database_id": "f9b3cf73-a9f6-4ba8-9458-4656249d1582"
+    }
+  ]
+}
