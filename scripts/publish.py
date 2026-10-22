@@ -78,6 +78,9 @@ def validate(item, obj):
     if not isinstance(desc, str) or not 100 <= len(desc) <= 180: raise ValueError('Description length invalid')
     if not isinstance(tags, list) or not 3 <= len(tags) <= 8 or not all(isinstance(t, str) and 2 <= len(t) <= 50 for t in tags): raise ValueError('Tags invalid')
     if not isinstance(body, str): raise ValueError('Body missing')
+    # Astro renders the article title separately.
+    # Remove a generated top-level Markdown heading.
+    body = re.sub(r'(?m)^#\s+[^\n]+\n*', '', body).strip()
     words = len(re.findall(r"\b[\w'-]+\b", body))
     if not 1200 <= words <= 2600: raise ValueError(f'Article length {words} outside 1200–2600')
     if len(re.findall(r'(?m)^##\s+', body)) < 5: raise ValueError('Insufficient section structure')
