@@ -1,0 +1,58 @@
+name: Autonomous article publishing
+
+on:
+  workflow_dispatch:
+    inputs:
+      batch:
+        description: 'Articles to publish: 6 for launch, 1 for normal'
+        required: true
+        type: choice
+        options: ['6', '1']
+        default: '6'
+  schedule:
+    # Wednesdays at 18:00 UTC (11 AM PDT / 10 AM PST; 11 AM MST in Arizona).
+    - cron: '0 18 * * 3'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: reliability-loop-publishing
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install site dependencies
+        run: npm ci
+      - name: Generate new article(s)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5-mini' }}
+          BATCH: ${{ github.event_name == 'workflow_dispatch' && inputs.batch || '1' }}
+        run: python scripts/publish.py --batch "$BATCH"
+      - name: Validate Astro site
+        run: npm run build
+      - name: Publish to main
+        run: |
+          if [[ -z "$(git status --porcelain -- src/content/articles public/images/articles)" ]]; then
+            echo "No new articles; nothing to commit."
+            exit 0
+          fi
+          git config user.name "reliability-loop-publisher[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/content/articles public/images/articles
+          git commit -m "Publish automated reliability articles"
+          git push origin HEAD:main
