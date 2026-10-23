@@ -97,8 +97,14 @@ def validate(item, obj):
         raise ValueError('Tags invalid')
     if not isinstance(body, str):
         raise ValueError('Body missing')
-    # Strip leading H1 only; reject unexpected H1 headings elsewhere.
+    # Normalize generated H1 headings outside fenced code blocks.
+    # Astro displays the article title separately.
     body = re.sub(r'\A\s*#\s+[^\n]+\n+', '', body).strip()
+
+    parts = re.split(r'(?m)(^```[^\n]*\n.*?^```\s*$)', body, flags=re.DOTALL)
+    for i in range(0, len(parts), 2):
+        parts[i] = re.sub(r'(?m)^#\s+', '## ', parts[i])
+    body = ''.join(parts).strip()
     words = len(re.findall(r"\b[\w'-]+\b", body))
     if not 1200 <= words <= 2600:
         raise ValueError(f'Article length {words} outside 1200–2600')
