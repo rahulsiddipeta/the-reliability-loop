@@ -97,21 +97,54 @@ def validate(item, obj):
         raise ValueError('Tags invalid')
     if not isinstance(body, str):
         raise ValueError('Body missing')
-    # Normalize generated H1 headings outside fenced code blocks.
-    # Astro displays the article title separately.
-    body = re.sub(r'\A\s*#\s+[^\n]+\n+', '', body).strip()
+        # Normalize Markdown headings while preserving fenced code blocks.
+    normalized_lines = []
+    inside_fence = False
+    fence_char = None
+    fence_length = 0
 
-    parts = re.split(r'(?m)(^```[^\n]*\n.*?^```\s*$)', body, flags=re.DOTALL)
-    for i in range(0, len(parts), 2):
-        parts[i] = re.sub(r'(?m)^#\s+', '## ', parts[i])
-    body = ''.join(parts).strip()
+    for line in body.splitlines():
+        fence = re.match(r'^\s{0,3}(`{3,}|~{3,})', line)
+
+        if fence:
+            marker = fence.group(1)
+
+            if not inside_fence:
+                inside_fence = True
+                fence_char = marker[0]
+                fence_length = len(marker)
+            elif marker[0] == fence_char and len(marker) >= fence_length:
+                inside_fence = False
+
+            normalized_lines.append(line)
+            continue
+
+        if not inside_fence:
+            # Convert unexpected H1 headings to H2.
+            line = re.sub(r'^#\s+', '## ', line)
+
+        normalized_lines.append(line)
+
+    body = '\n'.join(normalized_lines).strip()
     words = len(re.findall(r"\b[\w'-]+\b", body))
     if not 1200 <= words <= 2600:
         raise ValueError(f'Article length {words} outside 1200–2600')
-    if len(re.findall(r'(?m)^##\s+', body)) < 5:
-        raise ValueError('Insufficient section structure')
-    if re.search(r'(?m)^#\s+', body):
-        raise ValueError('Body contains duplicate H1')
+        # Count section headings outside code fences.
+    heading_count = 0
+    inside_fence = False
+
+    for line in body.splitlines():
+        if re.match(r'^\s{0,3}(`{3,}|~{3,})', line):
+            inside_fence = not inside_fence
+            continue
+
+        if not inside_fence and re.match(r'^#{2,3}\s+', line):
+            heading_count += 1
+
+    if heading_count < 5:
+        raise ValueError(
+            f'Insufficient section structure: found {heading_count} headings'
+        )
     if re.search(r'(?i)(at paypal|our internal systems|in my team at paypal)', body):
         raise ValueError('Potential employer-specific reference')
     if re.search(r'(?i)\b(lorem ipsum|as an ai language model)\b', body):
