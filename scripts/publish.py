@@ -61,20 +61,187 @@ Use hypothetical examples with explicit labels. No fabricated incidents, measure
 
 
 def review_article(item, article):
-    prompt = f'''Independently audit this proposed technical article. Do NOT assume it is correct.
-Title: {item['title']}; category: {item['category']}.
-Focus on exact semantics of code/configuration, vendor/tool behavior, cardinality and sampling, architecture feasibility, misleading generalizations, unsupported numerical claims, safety/security risks, and conceptual accuracy. Identify specific line or excerpt and explain the failure mode. For example, Prometheus metric_relabel_configs action: drop removes matching metric samples, not just a label; action: labeldrop removes matching label names. Look for other mistakes too.
-Return JSON ONLY: {{"approved": boolean, "issues": [{{"severity":"critical|major|minor", "excerpt":"...", "explanation":"...", "correction":"..."}}]}}.
-Approve only when no critical or major issues remain. If uncertain about technical semantics, mark a major issue and request verification; do not guess. An independent LLM review is not proof of correctness.
-ARTICLE JSON:\n{json.dumps(article, ensure_ascii=False)}'''
-    result = ask_llm('You are a skeptical senior production reliability reviewer. Return JSON only.', prompt)
-    if not isinstance(result, dict) or type(result.get('approved')) is not bool or not isinstance(result.get('issues'), list):
+    body = article.get('body', '')
+
+    if not isinstance(body, str):
+        raise ValueError('Reviewer received invalid article body')
+
+    # Identify fenced code blocks before requesting the review.
+    # Each block must receive an explicit assessment.
+    code_blocks = re.findall(
+        r'(?ms)^```[^\n]*\n.*?^```[ \t]*$',
+        body
+    )
+
+    numbered_blocks = [
+        {
+            'id': index,
+            'content': block
+        }
+        for index, block in enumerate(code_blocks, start=1)
+    ]
+
+    prompt = f'''You are performing an independent production-engineering
+technical audit for The Reliability Loop.
+
+ARTICLE TITLE: {item['title']}
+CATEGORY: {item['category']}
+
+Do not assume the article is technically correct.
+
+MANDATORY REVIEW REQUIREMENTS:
+
+1. Examine every fenced code/configuration block independently.
+
+2. For each block:
+   - Identify its language or tool.
+   - Explain what the commands or configuration actually do.
+   - Check syntax and semantic correctness.
+   - Identify destructive behavior, dropped data, security risks,
+     misleading examples, and operational failure modes.
+   - Determine whether the surrounding explanation matches
+     the actual behavior.
+   - Mark uncertain semantics as requiring verification.
+
+3. Specifically distinguish:
+   - Prometheus drop/keep versus labeldrop/labelkeep.
+   - Metric-series cardinality versus sample ingestion volume.
+   - Recording rules versus source-series elimination.
+   - Metrics sampling versus trace sampling.
+   - Hypothetical architecture versus deployable configuration.
+
+4. Review the article's non-code technical claims, architecture,
+   tradeoffs, operational recommendations, and numerical examples.
+
+5. Do not approve articles containing unresolved critical or
+   major technical issues.
+
+6. If the article contains unfenced commands or configuration,
+   report that as a major issue when it creates ambiguity.
+
+7. Do not invent documentation, verification results, or tests
+   that you have not performed.
+
+CODE BLOCKS TO REVIEW:
+{json.dumps(numbered_blocks, ensure_ascii=False)}
+
+ARTICLE:
+{json.dumps(article, ensure_ascii=False)}
+
+Return ONLY a JSON object with this structure:
+
+{{
+  "approved": true,
+  "code_reviews": [
+    {{
+      "id": 1,
+      "language": "yaml",
+      "actual_behavior": "Explain what the example actually does.",
+      "semantics_verified": true,
+      "issues": []
+    }}
+  ],
+  "issues": [
+    {{
+      "severity": "critical|major|minor",
+      "excerpt": "Exact problematic excerpt",
+      "explanation": "Why it is incorrect or unsafe",
+      "correction": "Specific correction"
+    }}
+  ]
+}}
+
+IMPORTANT:
+- code_reviews must contain exactly one assessment per supplied block.
+- Use semantics_verified=false when uncertain.
+- An approved article must have no critical or major issues.
+- Do not approve uncertain or unverified executable examples.
+'''
+
+    result = ask_llm(
+        'You are a skeptical senior production reliability reviewer. '
+        'Return valid JSON only.',
+        prompt
+    )
+
+    if not isinstance(result, dict):
         raise ValueError('Reviewer response malformed')
+
+    if type(result.get('approved')) is not bool:
+        raise ValueError('Reviewer approval missing')
+
+    if not isinstance(result.get('issues'), list):
+        raise ValueError('Reviewer issues missing')
+
+    reviews = result.get('code_reviews')
+
+    if not isinstance(reviews, list):
+        raise ValueError('Reviewer code assessments missing')
+
+    expected_ids = set(range(1, len(code_blocks) + 1))
+    received_ids = set()
+
+    for review in reviews:
+        if not isinstance(review, dict):
+            raise ValueError('Malformed code review')
+
+        block_id = review.get('id')
+
+        if type(block_id) is not int or block_id not in expected_ids:
+            raise ValueError('Unexpected code review ID')
+
+        if block_id in received_ids:
+            raise ValueError('Duplicate code review ID')
+
+        received_ids.add(block_id)
+
+        if not isinstance(review.get('actual_behavior'), str) or not review['actual_behavior'].strip():
+            raise ValueError('Missing code behavior explanation')
+
+        if type(review.get('semantics_verified')) is not bool:
+            raise ValueError('Missing code verification status')
+
+        if not isinstance(review.get('issues'), list):
+            raise ValueError('Malformed code review issues')
+
+        if not review['semantics_verified']:
+            result['approved'] = False
+            result['issues'].append({
+                'severity': 'major',
+                'excerpt': f'Code block {block_id}',
+                'explanation': 'Technical semantics could not be verified.',
+                'correction': 'Correct or remove the uncertain example.'
+            })
+
+        for code_issue in review['issues']:
+            if not isinstance(code_issue, dict):
+                raise ValueError('Malformed code issue')
+
+            if code_issue.get('severity') not in {
+                'critical', 'major', 'minor'
+            }:
+                raise ValueError('Invalid code issue severity')
+
+            result['issues'].append(code_issue)
+
+    if received_ids != expected_ids:
+        raise ValueError('Reviewer did not assess every code block')
+
     for issue in result['issues']:
-        if not isinstance(issue, dict) or issue.get('severity') not in {'critical', 'major', 'minor'}:
-            raise ValueError('Reviewer issue malformed')
-    if any(i['severity'] in {'critical', 'major'} for i in result['issues']):
+        if not isinstance(issue, dict):
+            raise ValueError('Malformed reviewer issue')
+
+        if issue.get('severity') not in {
+            'critical', 'major', 'minor'
+        }:
+            raise ValueError('Invalid reviewer issue severity')
+
+    if any(
+        issue['severity'] in {'critical', 'major'}
+        for issue in result['issues']
+    ):
         result['approved'] = False
+
     return result
 
 
