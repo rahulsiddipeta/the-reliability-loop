@@ -253,6 +253,39 @@ REVIEW: {json.dumps(review, ensure_ascii=False)}
 ARTICLE: {json.dumps(article, ensure_ascii=False)}'''
     return ask_llm('You are a senior SRE editor correcting specific technical errors. Return JSON only.', prompt)
 
+def correct_validation_error(item, article, error):
+    """Ask the model to correct a specific deterministic validation failure."""
+    prompt = f'''Correct this technical article so it passes validation.
+
+TITLE: {item['title']}
+CATEGORY: {item['category']}
+
+VALIDATION ERROR:
+{str(error)}
+
+MANDATORY INSTRUCTIONS:
+- Fix the specific validation error.
+- Preserve the article's technical accuracy and substantive content.
+- If a Prometheus metric_relabel_configs example uses action: drop
+  or action: keep, understand that these filter entire metric samples.
+  They do NOT remove individual labels.
+- If the intent is to remove a label, use action: labeldrop with an
+  appropriate regex, and explain the risk of label-set collisions.
+- Do not blindly replace drop/keep if sample filtering was intended.
+  Remove uncertain examples instead.
+- Do not introduce fabricated configurations, unsupported claims,
+  or new technical errors.
+- Preserve 1500–2200 substantive words and at least five sections.
+- Return ONLY JSON with description, tags, and body.
+
+ARTICLE:
+{json.dumps(article, ensure_ascii=False)}
+'''
+    return ask_llm(
+        'You are a senior SRE editor correcting a specific technical '
+        'validation failure. Return valid JSON only.',
+        prompt
+    )
 
 def validate(item, obj):
     if not isinstance(obj, dict):
@@ -436,16 +469,60 @@ def main():
             try:
                 article = draft_article(item)
                 for review_round in range(2):
-                    validated = validate(item, article)
-                    article = {'description': validated[0], 'tags': validated[1], 'body': validated[2]}
+
+                    # Correct deterministic validation failures before review.
+                    for correction_round in range(2):
+                        try:
+                            validated = validate(item, article)
+                            break
+                        except ValueError as validation_error:
+                            if correction_round == 1:
+                                raise
+
+                            print(
+                                f'Validation correction for {item["slug"]}: '
+                                f'{validation_error}',
+                                flush=True
+                            )
+
+                            article = correct_validation_error(
+                                item,
+                                article,
+                                validation_error
+                            )
+
+                    article = {
+                        'description': validated[0],
+                        'tags': validated[1],
+                        'body': validated[2]
+                    }
+
                     review = review_article(item, article)
+
                     if review['approved']:
-                        print(f'Technical review passed for {item["slug"]} (round {review_round+1})', flush=True)
+                        # Final safety check before writing.
+                        validated = validate(item, article)
+
+                        print(
+                            f'Technical review passed for {item["slug"]} '
+                            f'(round {review_round + 1})',
+                            flush=True
+                        )
+
                         write_article(item, validated)
                         break
-                    print(f'Technical review rejected {item["slug"]}: {json.dumps(review["issues"], ensure_ascii=False)[:2000]}', flush=True)
+
+                    print(
+                        f'Technical review rejected {item["slug"]}: '
+                        f'{json.dumps(review["issues"], ensure_ascii=False)[:2000]}',
+                        flush=True
+                    )
+
                     if review_round == 1:
-                        raise ValueError('Technical review failed after revision')
+                        raise ValueError(
+                            'Technical review failed after revision'
+                        )
+
                     article = revise_article(item, article, review)
                 break
             except (ValueError, KeyError, json.JSONDecodeError, urllib.error.HTTPError, urllib.error.URLError) as exc:
