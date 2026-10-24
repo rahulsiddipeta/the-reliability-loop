@@ -151,11 +151,54 @@ def validate(item, obj):
         raise ValueError('Placeholder text')
     if re.search(r'(?m)^---\s*$', body):
         raise ValueError('Unexpected YAML separator in body')
-    # Prevent recurrence of the known sample-dropping mistake; human-independent checks are still limited.
-    for match in re.finditer(r'(?ms)^```(?:yaml|yml)\s*\n(.*?)^```', body):
-        snippet = match.group(1)
-        if 'metric_relabel_configs:' in snippet and re.search(r'(?m)^\s*action:\s*(?:drop|keep)\s*$', snippet):
-            raise ValueError('Metric relabel example uses sample-dropping action; requires manual verification')
+    # Safety check for Prometheus metric relabeling examples.
+    # Reject sample-dropping actions in metric_relabel_configs,
+    # including unfenced examples and trailing YAML comments.
+    #
+    # This is deliberately conservative: drop/keep can be legitimate,
+    # but generated examples require additional verification.
+
+    lines = body.splitlines()
+
+    in_metric_relabel = False
+    relabel_indent = 0
+
+    for line in lines:
+        stripped = line.strip()
+
+        if re.match(r'^metric_relabel_configs\s*:', stripped):
+            in_metric_relabel = True
+            relabel_indent = len(line) - len(line.lstrip())
+            continue
+
+        if not in_metric_relabel:
+            continue
+
+        # Exit when another YAML configuration key begins
+        # at the same or a lower indentation level.
+        indent = len(line) - len(line.lstrip())
+
+        if (
+            stripped
+            and not stripped.startswith(('#', '-', '```', '~~~'))
+            and indent <= relabel_indent
+            and re.match(r'^[A-Za-z_][\w-]*\s*:', stripped)
+        ):
+            in_metric_relabel = False
+            continue
+
+        action = re.search(
+            r'\baction\s*:\s*["\']?(drop|keep)["\']?\s*(?:#.*)?$',
+            stripped,
+            re.IGNORECASE,
+        )
+
+        if action:
+            raise ValueError(
+                'Unsafe Prometheus metric_relabel_configs example: '
+                f'action={action.group(1)}. '
+                'Sample-dropping actions require manual verification.'
+            )
     return desc, tags, body
 
 
