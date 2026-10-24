@@ -287,6 +287,37 @@ ARTICLE:
         prompt
     )
 
+def normalize_description(item, article):
+    """Ensure article description is between 100 and 180 characters."""
+    if not isinstance(article, dict):
+        return article
+
+    desc = article.get("description")
+
+    if isinstance(desc, str) and 100 <= len(desc) <= 180:
+        return article
+
+    if not isinstance(desc, str):
+        desc = ""
+
+    desc = re.sub(r"\s+", " ", desc).strip()
+
+    if len(desc) > 180:
+        desc = desc[:177].rsplit(" ", 1)[0].rstrip(" ,;:-") + "..."
+
+    if len(desc) < 100:
+        fallback = (
+            f"Explore {item['title'].lower()} with practical SRE "
+            "engineering guidance, production considerations, "
+            "implementation examples, and reliability trade-offs."
+        )
+        desc = fallback
+
+    if len(desc) > 180:
+        desc = desc[:177].rsplit(" ", 1)[0].rstrip(" ,;:-") + "..."
+
+    return {**article, "description": desc}
+
 def validate(item, obj):
     if not isinstance(obj, dict):
         raise ValueError('Invalid article JSON')
@@ -473,6 +504,7 @@ def main():
                     # Correct deterministic validation failures before review.
                     for correction_round in range(2):
                         try:
+                            article = normalize_description(item, article)
                             validated = validate(item, article)
                             break
                         except ValueError as validation_error:
@@ -500,7 +532,8 @@ def main():
                     review = review_article(item, article)
 
                     if review['approved']:
-                        # Final safety check before writing.
+                        # Normalize metadata and perform final safety validation.
+                        article = normalize_description(item, article)                        
                         validated = validate(item, article)
 
                         print(
