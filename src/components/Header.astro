@@ -139,17 +139,17 @@ const isActive = (path: string) => {
 
       font-size: 13px;
     }
-
-    .site-links a:first-child {
-      display: none;
-    }
   }
 
   @media (max-width: 480px) {
+    .site-nav {
+      gap: 14px;
+    }
+
     .site-brand {
       font-size: 11px;
 
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
     }
 
     .site-links {
@@ -158,6 +158,27 @@ const isActive = (path: string) => {
 
     .site-links a {
       font-size: 12px;
+    }
+  }
+
+  /* Very narrow phones: links move to their own row instead of overflowing. */
+  @media (max-width: 379px) {
+    .site-nav {
+      flex-wrap: wrap;
+
+      row-gap: 0;
+
+      padding-top: 16px;
+    }
+
+    .site-links {
+      width: 100%;
+
+      justify-content: space-between;
+    }
+
+    .site-links a {
+      padding: 14px 0 12px;
     }
   }
 </style>
