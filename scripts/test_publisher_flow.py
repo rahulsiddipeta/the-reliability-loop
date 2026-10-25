@@ -145,5 +145,20 @@ class TestModelAndRevision(unittest.TestCase):
         self.assertIn("delete every code block", ask.call_args.args[1])
 
 
+class TestDescription(unittest.TestCase):
+
+    def test_long_description_is_rewritten_not_truncated(self):
+        good = "Readiness probes control traffic routing, not health; how they work, how they fail, and how to design them for production."
+        with patch.object(publish, "ask_llm", return_value={"description": good}):
+            result = publish.normalize_description(ITEM, {**GOOD, "description": "x " * 150})
+        self.assertEqual(result["description"], good)
+
+    def test_failed_rewrite_falls_back_to_truncation(self):
+        with patch.object(publish, "ask_llm", side_effect=ValueError("boom")):
+            result = publish.normalize_description(ITEM, {**GOOD, "description": "word " * 60})
+        self.assertTrue(100 <= len(result["description"]) <= 180)
+        self.assertTrue(result["description"].endswith("..."))
+
+
 if __name__ == "__main__":
     unittest.main()

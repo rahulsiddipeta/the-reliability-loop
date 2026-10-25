@@ -403,6 +403,19 @@ def normalize_description(item, article):
 
     desc = re.sub(r"\s+", " ", desc).strip()
 
+    # Prefer a rewritten description over a truncated one ending in "...".
+    try:
+        rewritten = ask_llm(
+            'You are a technical editor. Return valid JSON only.',
+            f'Write a complete one- or two-sentence description of 130-170 characters for the article '
+            f'"{item["title"]}". Return ONLY JSON: {{"description": "..."}}. '
+            f'Current description: {desc or "(missing)"}'
+        ).get('description')
+        if isinstance(rewritten, str) and 100 <= len(rewritten.strip()) <= 180:
+            return {**article, "description": rewritten.strip()}
+    except Exception as exc:
+        print(f'Description rewrite failed ({exc}); truncating instead', flush=True)
+
     if len(desc) > 180:
         desc = desc[:177].rsplit(" ", 1)[0].rstrip(" ,;:-") + "..."
 
