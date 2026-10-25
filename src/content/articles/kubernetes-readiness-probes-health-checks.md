@@ -1,6 +1,6 @@
 ---
 title: "Kubernetes Readiness Probes Are Not Health Checks"
-description: "Why Kubernetes readiness probes are routing controls rather than comprehensive health checks, with precise mechanics (EndpointSlice conditions, kube-proxy behavior, DNS..."
+description: "Kubernetes readiness probes are routing controls, not health checks. How EndpointSlices, kube-proxy and DNS really use them, and how to design probes safely."
 pubDate: 2026-10-25
 author: Rahul Siddipeta
 category: "Platform Engineering"
