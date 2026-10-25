@@ -1,0 +1,182 @@
+---
+import { getCollection } from 'astro:content';
+
+import BaseHead from '../../components/BaseHead.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import TopicFilter from '../../components/TopicFilter.astro';
+import { topics, type Topic } from '../../topics';
+
+export function getStaticPaths() {
+  return topics.map((topic) => ({
+    params: { topic: topic.id },
+    props: { topic },
+  }));
+}
+
+const { topic } = Astro.props as { topic: Topic };
+
+const allArticles = (
+  await getCollection('articles', ({ data }) => !data.draft)
+).sort(
+  (a, b) =>
+    b.data.pubDate.valueOf() -
+    a.data.pubDate.valueOf()
+);
+
+const articles = allArticles.filter(
+  (article) => article.data.category === topic.name
+);
+---
+
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <BaseHead
+      title={`${topic.name} | The Reliability Loop`}
+      description={topic.description}
+    />
+
+    <style>
+      .page-hero {
+        position: relative;
+
+        overflow: hidden;
+
+        padding: 82px 0 66px;
+
+        border-bottom: 1px solid var(--border);
+      }
+
+      .page-hero::before {
+        content: "";
+
+        position: absolute;
+
+        width: 380px;
+        height: 380px;
+
+        top: -230px;
+        right: -80px;
+
+        border-radius: 50%;
+
+        background: var(--wisteria);
+
+        opacity: 0.28;
+      }
+
+      .hero-inner {
+        position: relative;
+        z-index: 1;
+      }
+
+      .page-title {
+        margin-top: 20px;
+      }
+
+      .articles-section {
+        padding: 65px 0 95px;
+      }
+
+      .section-label {
+        margin-bottom: 28px;
+
+        color: var(--text-muted);
+
+        font-size: 11px;
+        font-weight: 700;
+
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .articles-grid {
+        display: grid;
+
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+
+        gap: 26px;
+      }
+
+      .empty {
+        color: var(--text-muted);
+
+        font-size: 18px;
+        line-height: 1.6;
+      }
+
+      .empty a {
+        color: var(--purple);
+
+        font-weight: 700;
+      }
+
+      @media (max-width: 760px) {
+        .page-hero {
+          padding: 62px 0 50px;
+        }
+
+        .articles-section {
+          padding: 48px 0 70px;
+        }
+
+        .articles-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <Header />
+
+    <main>
+      <section class="page-hero">
+        <div class="site-container hero-inner">
+          <div class="eyebrow">
+            Topic {topic.number}
+          </div>
+
+          <h1 class="page-title">
+            {topic.name}
+          </h1>
+
+          <p class="page-description">
+            {topic.description}
+          </p>
+
+          <TopicFilter articles={allArticles} active={topic.id} />
+        </div>
+      </section>
+
+      <section class="articles-section">
+        <div class="site-container">
+          <div class="section-label">
+            {articles.length} {articles.length === 1 ? 'article' : 'articles'}
+          </div>
+
+          {
+            articles.length > 0 ? (
+              <div class="articles-grid">
+                {articles.map((article) => (
+                  <ArticleCard article={article} />
+                ))}
+              </div>
+            ) : (
+              <p class="empty">
+                New {topic.name} field notes are on the way.
+                Meanwhile, <a href="/articles">browse all articles →</a>
+              </p>
+            )
+          }
+        </div>
+      </section>
+    </main>
+
+    <Footer />
+  </body>
+</html>

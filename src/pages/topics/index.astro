@@ -1,45 +1,25 @@
 ---
+import { getCollection } from 'astro:content';
+
 import BaseHead from '../../components/BaseHead.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+import { topics } from '../../topics';
 
-const topics = [
-  {
-    id: 'sre',
-    name: 'SRE',
-    number: '01',
-    description:
-      'Incident response, SLOs, failure management, operational maturity and the engineering practices behind reliable production systems.',
-  },
-  {
-    id: 'platform-engineering',
-    name: 'Platform Engineering',
-    number: '02',
-    description:
-      'Internal platforms, developer experience, infrastructure abstractions and the systems that help engineering teams move safely at scale.',
-  },
-  {
-    id: 'distributed-systems',
-    name: 'Distributed Systems',
-    number: '03',
-    description:
-      'Failure modes, resilience, scaling behavior and the architectural tradeoffs that appear when systems span machines, regions and services.',
-  },
-  {
-    id: 'observability',
-    name: 'Observability',
-    number: '04',
-    description:
-      'Logs, metrics, traces, telemetry design and the context engineers — and increasingly AI systems — need to understand production.',
-  },
-  {
-    id: 'ai-and-automation',
-    name: 'AI & Automation',
-    number: '05',
-    description:
-      'How automation evolves toward autonomous operations while preserving confidence, verification, blast-radius controls and human judgment.',
-  },
-];
+const articles = (
+  await getCollection('articles', ({ data }) => !data.draft)
+).sort(
+  (a, b) =>
+    b.data.pubDate.valueOf() -
+    a.data.pubDate.valueOf()
+);
+
+const topicsWithArticles = topics.map((topic) => ({
+  ...topic,
+  articles: articles.filter(
+    (article) => article.data.category === topic.name
+  ),
+}));
 ---
 
 <!doctype html>
@@ -143,6 +123,59 @@ const topics = [
         line-height: 1.65;
       }
 
+      .topic h2 a {
+        color: inherit;
+
+        text-decoration: none;
+      }
+
+      .topic h2 a:hover {
+        color: var(--purple-dark);
+      }
+
+      .topic-articles {
+        margin: 18px 0 0;
+        padding: 0;
+
+        list-style: none;
+      }
+
+      .topic-articles li {
+        padding: 7px 0;
+
+        border-top: 1px solid var(--border);
+      }
+
+      .topic-articles a {
+        color: var(--text);
+
+        font-size: 15px;
+        font-weight: 600;
+
+        text-decoration: none;
+      }
+
+      .topic-articles a:hover {
+        color: var(--purple-dark);
+      }
+
+      .topic-link {
+        display: inline-block;
+
+        margin-top: 16px;
+
+        color: var(--purple);
+
+        font-size: 14px;
+        font-weight: 700;
+
+        text-decoration: none;
+      }
+
+      .topic-link:hover {
+        color: var(--purple-dark);
+      }
+
       @media (max-width: 760px) {
         .page-hero {
           padding: 62px 0 50px;
@@ -160,7 +193,7 @@ const topics = [
           padding: 30px 0;
         }
 
-        .topic p {
+        .topic-body {
           grid-column: 2;
         }
       }
@@ -192,7 +225,7 @@ const topics = [
       <section class="topics-section">
         <div class="site-container">
           {
-            topics.map((topic) => (
+            topicsWithArticles.map((topic) => (
               <article
                 class="topic"
                 id={topic.id}
@@ -202,12 +235,34 @@ const topics = [
                 </div>
 
                 <h2>
-                  {topic.name}
+                  <a href={`/topics/${topic.id}`}>
+                    {topic.name}
+                  </a>
                 </h2>
 
-                <p>
-                  {topic.description}
-                </p>
+                <div class="topic-body">
+                  <p>
+                    {topic.description}
+                  </p>
+
+                  {topic.articles.length > 0 && (
+                    <ul class="topic-articles">
+                      {topic.articles.slice(0, 3).map((article) => (
+                        <li>
+                          <a href={`/articles/${article.id}`}>
+                            {article.data.title}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  <a class="topic-link" href={`/topics/${topic.id}`}>
+                    {topic.articles.length > 0
+                      ? `View all ${topic.articles.length} ${topic.articles.length === 1 ? 'article' : 'articles'} →`
+                      : 'Articles coming soon →'}
+                  </a>
+                </div>
               </article>
             ))
           }

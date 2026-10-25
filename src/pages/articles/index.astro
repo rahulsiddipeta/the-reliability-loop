@@ -4,6 +4,8 @@ import { getCollection } from 'astro:content';
 import BaseHead from '../../components/BaseHead.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import TopicFilter from '../../components/TopicFilter.astro';
 
 const articles = (
   await getCollection('articles', ({ data }) => !data.draft)
@@ -12,13 +14,6 @@ const articles = (
     b.data.pubDate.valueOf() -
     a.data.pubDate.valueOf()
 );
-
-const formatDate = (date: Date) =>
-  date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
 ---
 
 <!doctype html>
@@ -81,93 +76,6 @@ const formatDate = (date: Date) =>
         gap: 26px;
       }
 
-      .article-card {
-        min-height: 300px;
-
-        padding: 30px;
-
-        display: flex;
-        flex-direction: column;
-
-        border: 1px solid var(--border);
-        border-radius: 14px;
-
-        background: rgba(255, 255, 255, 0.55);
-
-        transition:
-          transform 160ms ease,
-          border-color 160ms ease,
-          background 160ms ease;
-      }
-
-      .article-card:hover {
-        transform: translateY(-3px);
-
-        border-color: var(--wisteria);
-
-        background: var(--surface);
-      }
-
-      .article-link {
-        height: 100%;
-
-        display: flex;
-        flex-direction: column;
-
-        text-decoration: none;
-      }
-
-      .category {
-        color: var(--purple);
-
-        font-size: 11px;
-        font-weight: 700;
-
-        letter-spacing: 0.13em;
-        text-transform: uppercase;
-      }
-
-      h2 {
-        margin: 14px 0;
-
-        color: var(--text);
-
-        font-size: 30px;
-        font-weight: 700;
-
-        line-height: 1.15;
-        letter-spacing: -0.03em;
-      }
-
-      .description {
-        margin: 0;
-
-        color: var(--text-muted);
-
-        font-size: 16px;
-        line-height: 1.6;
-      }
-
-      .meta {
-        margin-top: auto;
-        padding-top: 28px;
-
-        display: flex;
-        flex-wrap: wrap;
-
-        gap: 7px 18px;
-
-        color: var(--text-muted);
-
-        font-size: 12px;
-      }
-
-      .read {
-        color: var(--purple);
-
-        font-weight: 700;
-      }
-
       .empty {
         color: var(--text-muted);
 
@@ -185,10 +93,6 @@ const formatDate = (date: Date) =>
 
         .articles-grid {
           grid-template-columns: 1fr;
-        }
-
-        .article-card {
-          min-height: 260px;
         }
       }
     </style>
@@ -213,6 +117,8 @@ const formatDate = (date: Date) =>
             distributed systems, observability, platform
             engineering and AI-powered operations.
           </p>
+
+          <TopicFilter articles={articles} />
         </div>
       </section>
 
@@ -222,38 +128,7 @@ const formatDate = (date: Date) =>
             articles.length > 0 ? (
               <div class="articles-grid">
                 {articles.map((article) => (
-                  <article class="article-card">
-                    <a
-                      class="article-link"
-                      href={`/articles/${article.id}`}
-                    >
-                      <div class="category">
-                        {article.data.category}
-                      </div>
-
-                      <h2>
-                        {article.data.title}
-                      </h2>
-
-                      <p class="description">
-                        {article.data.description}
-                      </p>
-
-                      <div class="meta">
-                        <span>
-                          {formatDate(article.data.pubDate)}
-                        </span>
-
-                        <span>
-                          {article.data.readTime}
-                        </span>
-
-                        <span class="read">
-                          Read →
-                        </span>
-                      </div>
-                    </a>
-                  </article>
+                  <ArticleCard article={article} />
                 ))}
               </div>
             ) : (

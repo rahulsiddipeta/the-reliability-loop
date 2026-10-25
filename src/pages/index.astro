@@ -4,14 +4,7 @@ import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-
-const topics = [
-  'SRE',
-  'Platform Engineering',
-  'Distributed Systems',
-  'Observability',
-  'AI & Automation',
-];
+import { topics } from '../topics';
 
 const articles = (
   await getCollection('articles', ({ data }) => !data.draft)
@@ -342,6 +335,38 @@ const formatDate = (date: Date) =>
         text-transform: uppercase;
       }
 
+      .view-all {
+        margin-top: 36px;
+
+        text-align: center;
+      }
+
+      .view-all-link {
+        display: inline-block;
+
+        padding: 13px 24px;
+
+        border: 1px solid var(--purple);
+        border-radius: 999px;
+
+        color: var(--purple);
+
+        font-size: 15px;
+        font-weight: 700;
+
+        text-decoration: none;
+
+        transition:
+          background 150ms ease,
+          color 150ms ease;
+      }
+
+      .view-all-link:hover {
+        background: var(--purple);
+
+        color: #ffffff;
+      }
+
       .loop-section {
         text-align: center;
       }
@@ -476,12 +501,9 @@ const formatDate = (date: Date) =>
               topics.map((topic) => (
                 <a
                   class="topic"
-                  href={`/topics#${topic
-                    .toLowerCase()
-                    .replaceAll(' ', '-')
-                    .replaceAll('&', 'and')}`}
+                  href={`/topics/${topic.id}`}
                 >
-                  {topic}
+                  {topic.name}
                 </a>
               ))
             }
@@ -581,6 +603,16 @@ const formatDate = (date: Date) =>
               <p class="empty-message">
                 More field notes are coming soon.
               </p>
+            )
+          }
+
+          {
+            articles.length > latest.length + 1 && (
+              <div class="view-all">
+                <a class="view-all-link" href="/articles">
+                  View all {articles.length} articles →
+                </a>
+              </div>
             )
           }
         </div>
