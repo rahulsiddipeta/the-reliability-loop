@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       batch:
-        description: 'Articles to publish: 6 for launch, 1 for normal'
+        description: 'Number of new articles (6 for launch, 1 for weekly)'
         required: true
         type: choice
-        options: ['6', '1']
+        options: ['6', '5', '4', '3', '2', '1']
         default: '6'
   schedule:
     # Sundays at 17:00 UTC = 9 AM PST (10 AM during US daylight saving time).

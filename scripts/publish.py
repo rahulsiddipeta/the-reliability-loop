@@ -558,7 +558,7 @@ def write_article(item, validated):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch', type=int, choices=[1, 6], required=True)
+    parser.add_argument('--batch', type=int, choices=range(1, 7), required=True)
     args = parser.parse_args()
     if not os.environ.get('OPENAI_API_KEY'):
         sys.exit('Missing OPENAI_API_KEY')
