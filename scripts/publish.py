@@ -26,7 +26,9 @@ CODE_RULES = (
     'Do not use Prometheus metric_relabel_configs with action: drop or action: keep. '
     'If showing labeldrop, scope it to specific audited metrics, never drop le or quantile, and warn that '
     'merging counter series breaks rate() and increase(). '
-    'Mark example hostnames and values as placeholders.'
+    'Mark example hostnames and values as placeholders. '
+    'Use at most three code blocks, each short and essential. '
+    'Never put credentials, tokens or passwords in commands, including via variables or headers.'
 )
 
 
@@ -322,7 +324,7 @@ SEVERITY RULES:
 
 def revise_article(item, article, review):
     prompt = f'''Revise this article to resolve every reviewer issue while preserving technical depth and the original topic.
-Return JSON ONLY with exactly description, tags, body (Markdown without frontmatter or H1). Do not claim technical facts you cannot support. Remove or clearly mark questionable code as conceptual instead of inventing working syntax. Keep 1500–2200 substantive words, 5–8 H2 sections, operational guidance, tradeoffs and a thoughtful conclusion.
+Return JSON ONLY with exactly description, tags, body (Markdown without frontmatter or H1). Do not claim technical facts you cannot support. Remove or clearly mark questionable code as conceptual instead of inventing working syntax. Resolve each issue by correcting, simplifying or removing the flagged text; do not add new code blocks or commands, since new examples introduce new review issues. Keep 1500–2200 substantive words, 5–8 H2 sections, operational guidance, tradeoffs and a thoughtful conclusion.
 {CODE_RULES}
 Title: {item['title']}; category: {item['category']}.
 REVIEW: {json.dumps(review, ensure_ascii=False)}
