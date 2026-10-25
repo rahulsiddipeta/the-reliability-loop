@@ -18,6 +18,16 @@ IMAGES = ROOT / 'public/images/articles'
 PLAN = json.loads((ROOT / 'scripts/editorial_plan.json').read_text(encoding='utf-8'))
 CATEGORIES = {'SRE', 'Platform Engineering', 'Distributed Systems', 'Observability', 'AI & Automation'}
 MODEL = os.getenv('OPENAI_MODEL', 'gpt-5-mini')
+# Shared writing rules for every prompt that produces article text; each one
+# addresses a recurring reason the technical reviewer rejected drafts.
+CODE_RULES = (
+    'Put every command, query (including PromQL), API call, endpoint path and configuration snippet '
+    'in a fenced code block with a language tag; never write them inline in prose. '
+    'Do not use Prometheus metric_relabel_configs with action: drop or action: keep. '
+    'If showing labeldrop, scope it to specific audited metrics, never drop le or quantile, and warn that '
+    'merging counter series breaks rate() and increase(). '
+    'Mark example hostnames and values as placeholders.'
+)
 
 
 def existing_articles():
@@ -69,6 +79,7 @@ Return ONLY JSON with description (140–160 characters), tags (4–6 strings), 
 Aim for 1500–2200 substantive words, 5–8 H2 sections, 2–4 sentences per ordinary paragraph.
 Include operational tradeoffs, failure modes, verification guidance and at least one useful technical example.
 If including configuration or code, verify exact syntax and behavior in your reasoning. Distinguish Prometheus metric_relabel_configs action: drop (drops entire samples) from labeldrop (removes labels); keep filters whole samples too. Avoid fabricated capabilities or pseudocode masquerading as deployable configuration.
+{CODE_RULES}
 Use hypothetical examples with explicit labels. No fabricated incidents, measurements, citations, proprietary information, or first-hand employer claims. No external images, Mermaid, or Markdown H1. Avoid generic filler and LinkedIn-style single-sentence paragraphs.'''
     return ask_llm('You are a senior SRE technical author. Return valid JSON only.', prompt)
 
@@ -312,6 +323,7 @@ SEVERITY RULES:
 def revise_article(item, article, review):
     prompt = f'''Revise this article to resolve every reviewer issue while preserving technical depth and the original topic.
 Return JSON ONLY with exactly description, tags, body (Markdown without frontmatter or H1). Do not claim technical facts you cannot support. Remove or clearly mark questionable code as conceptual instead of inventing working syntax. Keep 1500–2200 substantive words, 5–8 H2 sections, operational guidance, tradeoffs and a thoughtful conclusion.
+{CODE_RULES}
 Title: {item['title']}; category: {item['category']}.
 REVIEW: {json.dumps(review, ensure_ascii=False)}
 ARTICLE: {json.dumps(article, ensure_ascii=False)}'''
@@ -337,6 +349,7 @@ MANDATORY INSTRUCTIONS:
   appropriate regex, and explain the risk of label-set collisions.
 - Do not blindly replace drop/keep if sample filtering was intended.
   Remove uncertain examples instead.
+- {CODE_RULES}
 - Do not introduce fabricated configurations, unsupported claims,
   or new technical errors.
 - Preserve 1500–2200 substantive words and at least five sections.
