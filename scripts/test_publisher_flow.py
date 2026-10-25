@@ -117,5 +117,33 @@ class TestReviewerRetry(unittest.TestCase):
         self.assertEqual(ask.call_count, 2)
 
 
+class TestModelAndRevision(unittest.TestCase):
+
+    def test_unavailable_model_falls_back_to_mini(self):
+        import urllib.error
+        unavailable = urllib.error.HTTPError("u", 404, "model_not_found", {}, None)
+        with patch.object(publish, "MODEL", "gpt-5"), \
+             patch.object(publish, "_ask_llm", side_effect=[unavailable, {"ok": True}]) as ask:
+            self.assertEqual(publish.ask_llm("s", "u"), {"ok": True})
+            self.assertEqual(publish.MODEL, publish.FALLBACK_MODEL)
+        self.assertEqual(ask.call_count, 2)
+
+    def test_last_revision_removes_flagged_code(self):
+        rejected = {"approved": False, "code_reviews": [],
+                    "issues": [{"severity": "major", "excerpt": "x", "explanation": "y", "correction": "z"}]}
+        with patch.object(publish, "draft_article", return_value=GOOD), \
+             patch.object(publish, "review_article", side_effect=[rejected, rejected, APPROVED]), \
+             patch.object(publish, "revise_article", return_value=GOOD) as revise, \
+             patch.object(publish, "write_article") as write:
+            publish.generate_article(ITEM)
+        self.assertEqual([c.kwargs["final"] for c in revise.call_args_list], [False, True])
+        write.assert_called_once()
+
+    def test_final_revision_prompt_deletes_code(self):
+        with patch.object(publish, "ask_llm", return_value={}) as ask:
+            publish.revise_article(ITEM, GOOD, {}, final=True)
+        self.assertIn("delete every code block", ask.call_args.args[1])
+
+
 if __name__ == "__main__":
     unittest.main()

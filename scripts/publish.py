@@ -17,18 +17,21 @@ ARTICLES = ROOT / 'src/content/articles'
 IMAGES = ROOT / 'public/images/articles'
 PLAN = json.loads((ROOT / 'scripts/editorial_plan.json').read_text(encoding='utf-8'))
 CATEGORIES = {'SRE', 'Platform Engineering', 'Distributed Systems', 'Observability', 'AI & Automation'}
-MODEL = os.getenv('OPENAI_MODEL', 'gpt-5-mini')
+MODEL = os.getenv('OPENAI_MODEL', 'gpt-5')
+FALLBACK_MODEL = 'gpt-5-mini'
 # Shared writing rules for every prompt that produces article text; each one
 # addresses a recurring reason the technical reviewer rejected drafts.
 CODE_RULES = (
-    'Put every command, query (including PromQL), API call, endpoint path and configuration snippet '
-    'in a fenced code block with a language tag; never write them inline in prose. '
-    'Do not use Prometheus metric_relabel_configs with action: drop or action: keep. '
-    'If showing labeldrop, scope it to specific audited metrics, never drop le or quantile, and warn that '
-    'merging counter series breaks rate() and increase(). '
-    'Mark example hostnames and values as placeholders. '
-    'Use at most three code blocks, each short and essential. '
-    'Never put credentials, tokens or passwords in commands, including via variables or headers.'
+    'Write a prose-led article: explain mechanisms, tradeoffs and failure modes in words. '
+    'Use at most two code blocks, and only when a short example is essential and you are certain '
+    'of its exact syntax and behavior; zero code blocks is acceptable. '
+    'Prefer one small, standard, well-known snippet over an elaborate one. '
+    'Put every command, query, API call and configuration snippet in a fenced code block with a '
+    'language tag; never write them inline in prose. '
+    'Never describe an example as runnable, deployable, tested or production-ready; label it as illustrative. '
+    'Do not include Prometheus relabeling configuration unless the article topic is Prometheus. '
+    'Never put credentials, tokens or passwords in commands. '
+    'Mark example hostnames and values as placeholders.'
 )
 
 
@@ -42,11 +45,24 @@ def slug_used(slug):
 
 
 def ask_llm(system, user):
+    global MODEL
+    try:
+        return _ask_llm(system, user)
+    except urllib.error.HTTPError as exc:
+        # Fall back if this API key cannot use the preferred model.
+        if exc.code not in {400, 403, 404} or MODEL == FALLBACK_MODEL:
+            raise
+        print(f'::warning::Model {MODEL} unavailable ({exc.code}); falling back to {FALLBACK_MODEL}', flush=True)
+        MODEL = FALLBACK_MODEL
+        return _ask_llm(system, user)
+
+
+def _ask_llm(system, user):
     payload = json.dumps({
         'model': MODEL,
         'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
         'response_format': {'type': 'json_object'},
-        'max_completion_tokens': 9000,
+        'max_completion_tokens': 32000,
     }).encode('utf-8')
     request = urllib.request.Request('https://api.openai.com/v1/chat/completions', data=payload,
         headers={'Authorization': 'Bearer ' + os.environ['OPENAI_API_KEY'], 'Content-Type': 'application/json'})
@@ -80,7 +96,7 @@ Title: {item['title']}. Category: {item['category']}.
 Return ONLY JSON with description (140–160 characters), tags (4–6 strings), body (Markdown, NO H1/frontmatter).
 Aim for 1500–2200 substantive words, 5–8 H2 sections, 2–4 sentences per ordinary paragraph.
 Include operational tradeoffs, failure modes, verification guidance and at least one useful technical example.
-If including configuration or code, verify exact syntax and behavior in your reasoning. Distinguish Prometheus metric_relabel_configs action: drop (drops entire samples) from labeldrop (removes labels); keep filters whole samples too. Avoid fabricated capabilities or pseudocode masquerading as deployable configuration.
+If including configuration or code, verify exact syntax and behavior in your reasoning. Avoid fabricated capabilities or pseudocode masquerading as deployable configuration.
 {CODE_RULES}
 Use hypothetical examples with explicit labels. No fabricated incidents, measurements, citations, proprietary information, or first-hand employer claims. No external images, Mermaid, or Markdown H1. Avoid generic filler and LinkedIn-style single-sentence paragraphs.'''
     return ask_llm('You are a senior SRE technical author. Return valid JSON only.', prompt)
@@ -143,7 +159,7 @@ MANDATORY REVIEW REQUIREMENTS:
    major technical issues.
 
 6. If the article contains unfenced commands or configuration,
-   report that as a major issue when it creates ambiguity.
+   report that as a minor issue.
 
 7. Do not invent documentation, verification results, or tests
    that you have not performed.
@@ -185,10 +201,15 @@ SEVERITY RULES:
 - Never use "high", "medium", "low", "warning", or "info".
 - critical: Dangerous behavior, significant security exposure,
   destructive operations, or severe production reliability risks.
-- major: Technically incorrect, misleading, or operationally
-  unsafe guidance requiring correction before publication.
-- minor: Noncritical improvements that do not materially affect
-  technical correctness.
+- major: A factual error, code or configuration that would not work
+  or would behave differently than the article says, or guidance
+  that would cause harm if followed as written.
+- minor: Everything else, including missing caveats, portability
+  notes, extra hardening suggestions, wording, structure, or the
+  article not stating that an example was tested. Illustrative
+  examples clearly labeled as such need not be production-complete.
+- Only report an issue as major or critical if you are confident it is
+  actually wrong; do not escalate stylistic preferences.
 - Apply these rules to BOTH top-level issues and issues inside
   individual code_reviews.
 - code_reviews must contain exactly one assessment per supplied block.
@@ -322,13 +343,14 @@ SEVERITY RULES:
     return result
 
 
-def revise_article(item, article, review):
+def revise_article(item, article, review, final=False):
+    final_rule = ('\nFINAL REVISION: delete every code block that has a critical or major issue and describe its intent in prose instead. Do not attempt to fix flagged code.' if final else '')
     prompt = f'''Revise this article to resolve every reviewer issue while preserving technical depth and the original topic.
 Return JSON ONLY with exactly description, tags, body (Markdown without frontmatter or H1). Do not claim technical facts you cannot support. Remove or clearly mark questionable code as conceptual instead of inventing working syntax. Resolve each issue by correcting, simplifying or removing the flagged text; do not add new code blocks or commands, since new examples introduce new review issues. Keep 1500–2200 substantive words, 5–8 H2 sections, operational guidance, tradeoffs and a thoughtful conclusion.
 {CODE_RULES}
 Title: {item['title']}; category: {item['category']}.
 REVIEW: {json.dumps(review, ensure_ascii=False)}
-ARTICLE: {json.dumps(article, ensure_ascii=False)}'''
+ARTICLE: {json.dumps(article, ensure_ascii=False)}{final_rule}'''
     return ask_llm('You are a senior SRE editor correcting specific technical errors. Return JSON only.', prompt)
 
 def correct_validation_error(item, article, error):
@@ -650,7 +672,7 @@ def generate_article(item):
                 if review_round == 2:
                     raise ValueError('Technical review failed after revision')
 
-                article = revise_article(item, article, review)
+                article = revise_article(item, article, review, final=review_round == 1)
         except (ValueError, KeyError, TypeError, json.JSONDecodeError, urllib.error.URLError, TimeoutError) as exc:
             print(f'Generation/review failed for {item["slug"]}, attempt {attempt+1}: {exc}', file=sys.stderr, flush=True)
             if attempt == 1:
