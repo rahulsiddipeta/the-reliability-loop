@@ -38,8 +38,21 @@ def ask_llm(system, user):
     }).encode('utf-8')
     request = urllib.request.Request('https://api.openai.com/v1/chat/completions', data=payload,
         headers={'Authorization': 'Bearer ' + os.environ['OPENAI_API_KEY'], 'Content-Type': 'application/json'})
-    with urllib.request.urlopen(request, timeout=240) as response:
-        result = json.load(response)
+    # Retry transient API failures (rate limits, 5xx, timeouts) with backoff.
+    for api_attempt in range(4):
+        try:
+            with urllib.request.urlopen(request, timeout=300) as response:
+                result = json.load(response)
+            break
+        except urllib.error.HTTPError as exc:
+            if exc.code not in {429, 500, 502, 503, 504} or api_attempt == 3:
+                raise
+            print(f'OpenAI API returned {exc.code}; retrying', flush=True)
+        except (urllib.error.URLError, TimeoutError) as exc:
+            if api_attempt == 3:
+                raise
+            print(f'OpenAI API request failed ({exc}); retrying', flush=True)
+        time.sleep(15 * (api_attempt + 1))
     choice = result['choices'][0]
     if choice.get('finish_reason') != 'stop':
         raise ValueError('AI response incomplete: ' + str(choice.get('finish_reason')))
@@ -143,7 +156,7 @@ Return ONLY a JSON object with this structure:
   ],
   "issues": [
     {{
-      "severity": "critical|major|minor",
+      "severity": "major",
       "excerpt": "Exact problematic excerpt",
       "explanation": "Why it is incorrect or unsafe",
       "correction": "Specific correction"
@@ -152,17 +165,68 @@ Return ONLY a JSON object with this structure:
 }}
 
 IMPORTANT:
+SEVERITY RULES:
+- Every issue must use exactly one of these lowercase severity values:
+  "critical", "major", or "minor".
+- Never return "critical|major|minor" as a literal value.
+- Never use "high", "medium", "low", "warning", or "info".
+- critical: Dangerous behavior, significant security exposure,
+  destructive operations, or severe production reliability risks.
+- major: Technically incorrect, misleading, or operationally
+  unsafe guidance requiring correction before publication.
+- minor: Noncritical improvements that do not materially affect
+  technical correctness.
+- Apply these rules to BOTH top-level issues and issues inside
+  individual code_reviews.
 - code_reviews must contain exactly one assessment per supplied block.
 - Use semantics_verified=false when uncertain.
 - An approved article must have no critical or major issues.
 - Do not approve uncertain or unverified executable examples.
 '''
 
-    result = ask_llm(
+    reviewer_system = (
         'You are a skeptical senior production reliability reviewer. '
-        'Return valid JSON only.',
-        prompt
+        'Return valid JSON only. Every issue severity must be exactly '
+        'critical, major, or minor.'
     )
+
+    result = ask_llm(reviewer_system, prompt)
+
+    def invalid_severities(response):
+        if not isinstance(response, dict):
+            return False
+
+        issues = response.get('issues', [])
+        reviews = response.get('code_reviews', [])
+
+        if not isinstance(issues, list) or not isinstance(reviews, list):
+            return False
+
+        all_issues = list(issues)
+
+        for review in reviews:
+            if isinstance(review, dict) and isinstance(review.get('issues'), list):
+                all_issues.extend(review['issues'])
+
+        return any(
+            isinstance(issue, dict)
+            and issue.get('severity') not in {'critical', 'major', 'minor'}
+            for issue in all_issues
+        )
+
+    if invalid_severities(result):
+        print(
+            'Reviewer returned invalid severity; retrying review once.',
+            flush=True
+        )
+
+        result = ask_llm(
+            reviewer_system,
+            prompt + '\n\nRETRY INSTRUCTION: The previous review '
+            'contained an invalid issue severity. Return a fresh, '
+            'complete technical review. Use only critical, major, '
+            'or minor for every issue severity. Assess every code block.'
+        )
 
     if not isinstance(result, dict):
         raise ValueError('Reviewer response malformed')
@@ -492,81 +556,91 @@ def main():
     if quantity == 0:
         sys.exit('No unused editorial topics remain')
     print(f'Existing published articles: {count}; generating {quantity} article(s) with {MODEL}', flush=True)
-    for item in available[:quantity]:
-        if item['category'] not in CATEGORIES:
-            raise ValueError('Unknown category')
-        last_error = None
-        for attempt in range(2):
-            try:
-                article = draft_article(item)
-                for review_round in range(2):
 
-                    # Correct deterministic validation failures before review.
-                    for correction_round in range(2):
-                        try:
-                            article = normalize_description(item, article)
-                            validated = validate(item, article)
-                            break
-                        except ValueError as validation_error:
-                            if correction_round == 1:
-                                raise
+    # A topic that fails review is skipped, not fatal: the next unused topic
+    # takes its place, so one difficult article cannot block the whole batch.
+    published, failed = [], []
+    max_failures = 6  # bounds API spend on a bad day
+    for item in available:
+        if len(published) == quantity or len(failed) == max_failures:
+            break
+        try:
+            generate_article(item)
+            published.append(item['slug'])
+        except Exception as exc:
+            failed.append(item['slug'])
+            print(f'::warning::Skipping {item["slug"]}: {exc}', flush=True)
 
-                            print(
-                                f'Validation correction for {item["slug"]}: '
-                                f'{validation_error}',
-                                flush=True
-                            )
+    print(f'Published: {published or "none"}', flush=True)
+    print(f'Skipped (will be retried next run): {failed or "none"}', flush=True)
+    if not published:
+        sys.exit('No article passed validation and technical review')
+    print('Generation complete; Astro build must pass before publishing.', flush=True)
 
-                            article = correct_validation_error(
-                                item,
-                                article,
-                                validation_error
-                            )
 
-                    article = {
-                        'description': validated[0],
-                        'tags': validated[1],
-                        'body': validated[2]
-                    }
-
-                    review = review_article(item, article)
-
-                    if review['approved']:
-                        # Normalize metadata and perform final safety validation.
-                        article = normalize_description(item, article)                        
+def generate_article(item):
+    """Draft, correct, review and write one article; raise if it cannot pass."""
+    if item['category'] not in CATEGORIES:
+        raise ValueError('Unknown category')
+    for attempt in range(2):
+        try:
+            article = draft_article(item)
+            for review_round in range(3):
+                # Correct deterministic validation failures before review.
+                for correction_round in range(2):
+                    try:
+                        article = normalize_description(item, article)
                         validated = validate(item, article)
-
+                        break
+                    except ValueError as validation_error:
+                        if correction_round == 1:
+                            raise
                         print(
-                            f'Technical review passed for {item["slug"]} '
-                            f'(round {review_round + 1})',
+                            f'Validation correction for {item["slug"]}: '
+                            f'{validation_error}',
                             flush=True
                         )
-
-                        write_article(item, validated)
-                        break
-
-                    print(
-                        f'Technical review rejected {item["slug"]}: '
-                        f'{json.dumps(review["issues"], ensure_ascii=False)[:2000]}',
-                        flush=True
-                    )
-
-                    if review_round == 1:
-                        raise ValueError(
-                            'Technical review failed after revision'
+                        article = correct_validation_error(
+                            item,
+                            article,
+                            validation_error
                         )
 
-                    article = revise_article(item, article, review)
-                break
-            except (ValueError, KeyError, json.JSONDecodeError, urllib.error.HTTPError, urllib.error.URLError) as exc:
-                last_error = exc
-                print(f'Generation/review failed for {item["slug"]}, attempt {attempt+1}: {exc}', file=sys.stderr, flush=True)
-                if attempt == 1:
-                    raise
-                time.sleep(3)
-        if last_error and not (ARTICLES / (item['slug'] + '.md')).exists():
-            raise last_error
-    print('Generation complete; Astro build must pass before publishing.', flush=True)
+                article = {
+                    'description': validated[0],
+                    'tags': validated[1],
+                    'body': validated[2]
+                }
+
+                review = review_article(item, article)
+
+                if review['approved']:
+                    # Normalize metadata and perform final safety validation.
+                    article = normalize_description(item, article)
+                    validated = validate(item, article)
+                    print(
+                        f'Technical review passed for {item["slug"]} '
+                        f'(round {review_round + 1})',
+                        flush=True
+                    )
+                    write_article(item, validated)
+                    return
+
+                print(
+                    f'Technical review rejected {item["slug"]}: '
+                    f'{json.dumps(review["issues"], ensure_ascii=False)[:2000]}',
+                    flush=True
+                )
+
+                if review_round == 2:
+                    raise ValueError('Technical review failed after revision')
+
+                article = revise_article(item, article, review)
+        except (ValueError, KeyError, TypeError, json.JSONDecodeError, urllib.error.URLError, TimeoutError) as exc:
+            print(f'Generation/review failed for {item["slug"]}, attempt {attempt+1}: {exc}', file=sys.stderr, flush=True)
+            if attempt == 1:
+                raise
+            time.sleep(3)
 
 
 if __name__ == '__main__':

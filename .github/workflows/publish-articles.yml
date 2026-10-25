@@ -10,24 +10,30 @@ on:
         options: ['6', '1']
         default: '6'
   schedule:
-    # Wednesdays at 18:00 UTC (11 AM PDT / 10 AM PST; 11 AM MST in Arizona).
-    - cron: '0 18 * * 3'
+    # Sundays at 17:00 UTC = 9 AM PST (10 AM during US daylight saving time).
+    - cron: '0 17 * * 0'
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: reliability-loop-publishing
   cancel-in-progress: false
 
+env:
+  REVIEW_BRANCH: auto/articles
+  GH_TOKEN: ${{ github.token }}
+
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: true
+          ref: main
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -35,24 +41,72 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      # If last run's review PR is still open, add to it so the article count
+      # includes pending articles and topics are never generated twice.
+      - name: Prepare review branch
+        run: |
+          git config user.name "reliability-loop-publisher[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          open_pr=$(gh pr list --head "$REVIEW_BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [[ -n "$open_pr" ]]; then
+            echo "Adding to open review PR #$open_pr"
+            git switch "$REVIEW_BRANCH"
+            git merge --no-edit origin/main
+          else
+            git switch -C "$REVIEW_BRANCH" origin/main
+          fi
+
       - name: Install site dependencies
         run: npm ci
+
+      - name: Publisher unit tests
+        run: |
+          python scripts/test_correction.py
+          python scripts/test_publisher_flow.py
+
       - name: Generate new article(s)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5-mini' }}
           BATCH: ${{ github.event_name == 'workflow_dispatch' && inputs.batch || '1' }}
-        run: python scripts/publish.py --batch "$BATCH"
+        shell: bash  # enables pipefail so a generator failure is not hidden by tee
+        run: python scripts/publish.py --batch "$BATCH" 2>&1 | tee publish.log
+
       - name: Validate Astro site
         run: npm run build
-      - name: Publish to main
+
+      - name: Open pull request for review
         run: |
           if [[ -z "$(git status --porcelain -- src/content/articles public/images/articles)" ]]; then
             echo "No new articles; nothing to commit."
             exit 0
           fi
-          git config user.name "reliability-loop-publisher[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/content/articles public/images/articles
-          git commit -m "Publish automated reliability articles"
-          git push origin HEAD:main
+          git commit -m "Add automated reliability articles"
+          git push --force-with-lease origin "$REVIEW_BRANCH"
+
+          {
+            echo "New AI-generated articles, each passed validation, technical review and the Astro build."
+            echo
+            echo "**Merge this PR to publish** (Cloudflare deploys \`main\`). Close it to reject; rejected topics are regenerated next run."
+            echo
+            echo "### Articles in this PR"
+            git diff --name-only origin/main -- src/content/articles | while read -r f; do
+              title=$(grep -m1 '^title:' "$f" | sed 's/^title: *//; s/^"//; s/"$//')
+              echo "- [$title](https://github.com/${{ github.repository }}/blob/$REVIEW_BRANCH/$f)"
+            done
+            echo
+            echo "### Generator log"
+            echo '```'
+            grep -E 'Existing published|Technical review passed|Skipping|Published:|Skipped' publish.log || true
+            echo '```'
+          } > pr-body.md
+
+          if gh pr view "$REVIEW_BRANCH" --json state --jq .state 2>/dev/null | grep -q OPEN; then
+            gh pr edit "$REVIEW_BRANCH" --body-file pr-body.md
+          else
+            gh pr create --base main --head "$REVIEW_BRANCH" \
+              --title "New articles for review ($(date -u +%Y-%m-%d))" \
+              --body-file pr-body.md --assignee "${{ github.repository_owner }}"
+          fi
