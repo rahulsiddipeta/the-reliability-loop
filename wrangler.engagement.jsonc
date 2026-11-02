@@ -7,6 +7,18 @@
 
   "compatibility_date": "2026-10-07",
 
+  // Serve the API first-party on the site's domain. The site Worker owns
+  // thereliabilityloop.com/*; this more specific route takes precedence.
+  "routes": [
+    {
+      "pattern": "thereliabilityloop.com/api/*",
+      "zone_name": "thereliabilityloop.com"
+    }
+  ],
+
+  // Keep the workers.dev URL for local development and cached pages.
+  "workers_dev": true,
+
   "d1_databases": [
     {
       "binding": "reliability_loop_db",

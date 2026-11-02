@@ -5,8 +5,10 @@ interface Props {
 
 const { slug } = Astro.props;
 
-const API =
-  'https://reliability-loop-engagement.rahul-siddipeta.workers.dev';
+// Same-origin in production (Worker routed at /api/*); see ArticleEngagement.
+const API = import.meta.env.DEV
+  ? 'https://reliability-loop-engagement.rahul-siddipeta.workers.dev'
+  : '';
 
 /*
  * PUBLIC Turnstile site key.
@@ -157,7 +159,7 @@ const TURNSTILE_SITE_KEY =
       const api =
         section.dataset.api;
 
-      if (!slug || !api) {
+      if (!slug || api === undefined) {
         return;
       }
 
@@ -184,19 +186,32 @@ const TURNSTILE_SITE_KEY =
       const storageKey =
         'reliability-loop-visitor-id';
 
-      let visitorId =
-        localStorage.getItem(
-          storageKey
-        );
+      const newVisitorId = () =>
+        typeof crypto !== 'undefined' &&
+        typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `${Date.now().toString(36)}-${Math.random()
+              .toString(36)
+              .slice(2, 12)}`;
+
+      let visitorId = null;
+
+      try {
+        visitorId =
+          localStorage.getItem(
+            storageKey
+          );
+      } catch {}
 
       if (!visitorId) {
-        visitorId =
-          crypto.randomUUID();
+        visitorId = newVisitorId();
 
-        localStorage.setItem(
-          storageKey,
-          visitorId
-        );
+        try {
+          localStorage.setItem(
+            storageKey,
+            visitorId
+          );
+        } catch {}
       }
 
       const formatDate = (
