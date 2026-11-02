@@ -9,7 +9,7 @@ readTime: "10 min read"
 featured: false
 draft: false
 ---
-![Conceptual engineering control loop for Can AI Agents Be Trusted During Production Incidents?](/images/articles/ai-agents-production-incidents.svg)
+![Can AI Agents Be Trusted During Incidents?: Trust is an engineered property: scoped capabilities, independent gates and verification](/images/articles/ai-agents-production-incidents.svg)
 
 ## Why trust is different during incidents
 

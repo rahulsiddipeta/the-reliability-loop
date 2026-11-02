@@ -1,5 +1,7 @@
+import json
 import os
 import sys
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 
@@ -158,6 +160,59 @@ class TestDescription(unittest.TestCase):
             result = publish.normalize_description(ITEM, {**GOOD, "description": "word " * 60})
         self.assertTrue(100 <= len(result["description"]) <= 180)
         self.assertTrue(result["description"].endswith("..."))
+
+
+class TestDiagrams(unittest.TestCase):
+
+    SPEC = json.loads(Path("scripts/diagrams/circuit-breakers-broken-dependencies.json").read_text())
+
+    def test_all_checked_in_specs_render(self):
+        import diagram
+        for path in sorted(Path("scripts/diagrams").glob("*.json")):
+            svg = diagram.render_svg(json.loads(path.read_text()), "SRE")
+            self.assertTrue(svg.startswith("<svg") and svg.endswith("</svg>"), path.name)
+
+    def test_invalid_spec_is_rejected(self):
+        import diagram
+        with self.assertRaises(ValueError):
+            diagram.validate_spec({**self.SPEC, "panels": self.SPEC["panels"][:2]})
+        with self.assertRaises(ValueError):
+            diagram.validate_spec({**self.SPEC, "title": "x" * 200})
+
+    def test_design_retries_then_succeeds(self):
+        with patch.object(publish, "ask_llm", side_effect=[{"title": "bad"}, self.SPEC]) as ask:
+            spec = publish.design_diagram(ITEM, GOOD["body"])
+        self.assertEqual(ask.call_count, 2)
+        self.assertIn("rejected", ask.call_args.args[1])
+        self.assertEqual(spec["accent"], self.SPEC["accent"])
+
+    def test_design_falls_back_after_two_failures(self):
+        with patch.object(publish, "ask_llm", side_effect=ValueError("boom")):
+            self.assertIsNone(publish.design_diagram(ITEM, GOOD["body"]))
+
+    def write(self, spec):
+        import tempfile
+        tmp = Path(tempfile.mkdtemp())
+        with patch.object(publish, "ROOT", tmp), \
+             patch.object(publish, "ARTICLES", tmp / "a"), \
+             patch.object(publish, "IMAGES", tmp / "i"), \
+             patch.object(publish, "DIAGRAMS", tmp / "d"), \
+             patch.object(publish, "design_diagram", return_value=spec):
+            publish.write_article(ITEM, (GOOD["description"], GOOD["tags"], GOOD["body"]))
+        return tmp
+
+    def test_write_article_uses_topic_diagram(self):
+        tmp = self.write(publish.diagram.validate_spec(self.SPEC))
+        article = (tmp / "a/test-article.md").read_text()
+        self.assertIn("![Circuit Breakers Don't Fix Broken Dependencies:", article)
+        self.assertIn("Broken Dependencies", (tmp / "i/test-article.svg").read_text())
+        self.assertTrue((tmp / "d/test-article.json").exists())
+
+    def test_write_article_falls_back_to_generic(self):
+        tmp = self.write(None)
+        self.assertIn("![Conceptual engineering control loop", (tmp / "a/test-article.md").read_text())
+        self.assertIn("Engineering control loop", (tmp / "i/test-article.svg").read_text())
+        self.assertFalse((tmp / "d").exists())
 
 
 if __name__ == "__main__":

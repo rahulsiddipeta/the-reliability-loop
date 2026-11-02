@@ -9,7 +9,7 @@ readTime: "11 min read"
 featured: false
 draft: false
 ---
-![Conceptual engineering control loop for Kubernetes Readiness Probes Are Not Health Checks](/images/articles/kubernetes-readiness-probes-health-checks.svg)
+![Readiness Probes Are Not Health Checks: Readiness decides who gets new traffic; it is not a verdict on service health](/images/articles/kubernetes-readiness-probes-health-checks.svg)
 
 ## Readiness is routing, not health
 

@@ -1,0 +1,36 @@
+{
+  "title": "The Deployment Succeeded.",
+  "accent": "Reliability Dropped.",
+  "subtitle": "Deploy-time signals are proxies; users experience latency, errors and correctness",
+  "panels": [
+    {
+      "heading": "Pipeline Is Green",
+      "caption": "Build, tests, probes and the rollout all report success",
+      "tone": "ok",
+      "nodes": ["CI Passed", "Rollout Done", "Probes Green"],
+      "note": "\"Container is up\" is not the same as \"ready under real load\""
+    },
+    {
+      "heading": "Hidden Amplifiers",
+      "caption": "Cold caches, retry storms, blocking migrations and risky flags shift the envelope",
+      "tone": "warn",
+      "nodes": ["Cold Pods", "Retries x3", "DB Contention"],
+      "note": "A tiny slowdown breaches timeouts; retries multiply load with no single failure"
+    },
+    {
+      "heading": "Users Feel It",
+      "caption": "Latency and errors rise while every deploy check stays green",
+      "tone": "fail",
+      "nodes": ["Users", "SLO Burn"],
+      "note": "The gap is between deploy success criteria and user-facing SLOs"
+    }
+  ],
+  "strip_title": "Make green mean good",
+  "strip_caption": "Encode SLOs into the deployment process so success reflects what users experience",
+  "steps": [
+    {"label": "Load-aware Readiness", "detail": "Pre-warm caches and pools", "tone": "info"},
+    {"label": "Aligned Timeouts", "detail": "Retry budgets with jitter", "tone": "info"},
+    {"label": "Staged Data Changes", "detail": "Reversible migrations", "tone": "warn"},
+    {"label": "SLO-gated Canary", "detail": "Auto-rollback on burn", "tone": "ok"}
+  ]
+}

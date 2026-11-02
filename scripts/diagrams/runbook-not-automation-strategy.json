@@ -1,0 +1,36 @@
+{
+  "title": "Your Runbook Is Not an",
+  "accent": "Automation Strategy",
+  "subtitle": "Runbooks guide human judgment; automation is a control loop that needs explicit guardrails",
+  "panels": [
+    {
+      "heading": "Runbook Narrative",
+      "caption": "Steps written for an on-call engineer who checks context before acting",
+      "tone": "info",
+      "nodes": ["Alert", "Human Judgment", "Restart Service"],
+      "note": "\"If error rates are high, consider restarting\" relies on unwritten checks"
+    },
+    {
+      "heading": "Scripted As-Is",
+      "caption": "The same steps run blindly on stale or incomplete signals",
+      "tone": "fail",
+      "nodes": ["Noisy Signal", "Script", "Fleet-wide Restart"],
+      "note": "No preconditions, no limits: automation acts during deploys and amplifies incidents"
+    },
+    {
+      "heading": "Guarded Controller",
+      "caption": "Sensors, policy, actuators and feedback with explicit safety checks",
+      "tone": "ok",
+      "nodes": ["Safety Checks", "Bounded Action", "Verify Outcome"],
+      "note": "Thresholds over windows, hysteresis, rate limits, kill switch and narrow blast radius"
+    }
+  ],
+  "strip_title": "From narrative to safe automation",
+  "strip_caption": "Write the guardrails first, then the behavior, and prove it before it touches production",
+  "steps": [
+    {"label": "Extract Decisions", "detail": "Invariants and no-go conditions", "tone": "info"},
+    {"label": "Shadow Mode", "detail": "Decide, log, compare to humans", "tone": "info"},
+    {"label": "Canary Scope", "detail": "One shard or zone, with kill switch", "tone": "warn"},
+    {"label": "Progressive Rollout", "detail": "Action rate tied to error budget", "tone": "ok"}
+  ]
+}

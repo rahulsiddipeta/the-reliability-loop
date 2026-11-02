@@ -9,7 +9,7 @@ readTime: "12 min read"
 featured: false
 draft: false
 ---
-![Conceptual engineering control loop for The Deployment Succeeded. Why Did Reliability Drop?](/images/articles/deployment-succeeded-reliability-dropped.svg)
+![The Deployment Succeeded. Reliability Dropped.: Deploy-time signals are proxies; users experience latency, errors and correctness](/images/articles/deployment-succeeded-reliability-dropped.svg)
 
 ## When success means nothing: the deploy passed, reliability fell
 

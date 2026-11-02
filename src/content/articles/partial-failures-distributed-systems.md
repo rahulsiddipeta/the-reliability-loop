@@ -9,7 +9,7 @@ readTime: "12 min read"
 featured: false
 draft: false
 ---
-![Conceptual engineering control loop for Why Distributed Systems Fail in Partial Ways](/images/articles/partial-failures-distributed-systems.svg)
+![Why Distributed Systems Fail in Partial Ways: Systems rarely fail all at once; they degrade along specific edges, cohorts and paths](/images/articles/partial-failures-distributed-systems.svg)
 
 ## Partial failure is the normal mode
 

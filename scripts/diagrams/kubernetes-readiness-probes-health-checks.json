@@ -1,0 +1,36 @@
+{
+  "title": "Readiness Probes Are",
+  "accent": "Not Health Checks",
+  "subtitle": "Readiness decides who gets new traffic; it is not a verdict on service health",
+  "panels": [
+    {
+      "heading": "Pod Turns Unready",
+      "caption": "The readiness probe fails; kubelet flips the Pod's Ready condition to false",
+      "tone": "warn",
+      "nodes": ["kubelet Probe", "Pod Condition", "Ready: false"],
+      "note": "The container is not restarted and existing connections are not cut"
+    },
+    {
+      "heading": "Routing Changes",
+      "caption": "The endpoint stays in the EndpointSlice with ready=false; kube-proxy stops sending new requests",
+      "tone": "info",
+      "nodes": ["EndpointSlice", "kube-proxy", "Ready Pods Only"],
+      "note": "ClusterIP DNS does not change; readiness only shifts new traffic between Pods"
+    },
+    {
+      "heading": "Health Is Elsewhere",
+      "caption": "Users can still fail while every Pod reports Ready",
+      "tone": "fail",
+      "nodes": ["All Pods Ready", "Users See Errors"],
+      "note": "Over-scoped probes flap whole fleets; shallow probes admit broken instances"
+    }
+  ],
+  "strip_title": "Use readiness as a routing valve",
+  "strip_caption": "Keep probes local and bounded, and measure real health from the outside in",
+  "steps": [
+    {"label": "Startup Probe", "detail": "Absorb slow warm-up", "tone": "info"},
+    {"label": "Readiness", "detail": "Can this Pod take new work?", "tone": "ok"},
+    {"label": "Liveness", "detail": "Restart only wedged processes", "tone": "warn"},
+    {"label": "SLOs + Synthetics", "detail": "Real user-facing health", "tone": "ok"}
+  ]
+}

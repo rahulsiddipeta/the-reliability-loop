@@ -1,0 +1,37 @@
+{
+  "title": "Error Budgets Are",
+  "accent": "Decision Tools",
+  "subtitle": "A budget should change what the team does next, not just what the dashboard shows",
+  "panels": [
+    {
+      "heading": "Budget Healthy",
+      "caption": "Burn is slow and plenty of budget remains for the window",
+      "tone": "ok",
+      "nodes": ["SLI vs SLO", "Budget 80% Left", "Ship Faster"],
+      "note": "Spend surplus deliberately: riskier releases, migrations and chaos drills"
+    },
+    {
+      "heading": "Burn Accelerating",
+      "caption": "Short and medium burn-rate windows both cross their thresholds",
+      "tone": "warn",
+      "nodes": ["Fast Burn", "Release Gate", "Rollouts Paused"],
+      "note": "Pre-agreed gates stop the pipeline by default instead of starting a debate"
+    },
+    {
+      "heading": "Budget Exhausted",
+      "caption": "Brakes engage and reliability work takes priority over features",
+      "tone": "fail",
+      "nodes": ["Budget Spent", "Reliability First"],
+      "note": "If no decision ever changes when the budget moves, it is only a dashboard"
+    }
+  ],
+  "strip_title": "The reliability loop",
+  "strip_caption": "Measure what users notice, set a target, and let the remaining budget drive policy",
+  "steps": [
+    {"label": "SLI", "detail": "User-visible outcome", "tone": "info"},
+    {"label": "SLO", "detail": "Target over a window", "tone": "info"},
+    {"label": "Error Budget", "detail": "Allowed unreliability", "tone": "warn"},
+    {"label": "Gates & Brakes", "detail": "Pre-agreed actions", "tone": "ok"},
+    {"label": "Backtest", "detail": "Calibrate against history", "tone": "ok"}
+  ]
+}

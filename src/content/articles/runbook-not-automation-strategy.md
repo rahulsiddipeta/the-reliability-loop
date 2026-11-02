@@ -9,7 +9,7 @@ readTime: "11 min read"
 featured: false
 draft: false
 ---
-![Conceptual engineering control loop for Your Runbook Is Not an Automation Strategy](/images/articles/runbook-not-automation-strategy.svg)
+![Your Runbook Is Not an Automation Strategy: Runbooks guide human judgment; automation is a control loop that needs explicit guardrails](/images/articles/runbook-not-automation-strategy.svg)
 
 ## The temptation to script the runbook
 

@@ -12,9 +12,12 @@ import time
 import urllib.error
 import urllib.request
 
+import diagram
+
 ROOT = Path(__file__).resolve().parents[1]
 ARTICLES = ROOT / 'src/content/articles'
 IMAGES = ROOT / 'public/images/articles'
+DIAGRAMS = ROOT / 'scripts/diagrams'
 PLAN = json.loads((ROOT / 'scripts/editorial_plan.json').read_text(encoding='utf-8'))
 CATEGORIES = {'SRE', 'Platform Engineering', 'Distributed Systems', 'Observability', 'AI & Automation'}
 MODEL = os.getenv('OPENAI_MODEL', 'gpt-5')
@@ -568,6 +571,54 @@ def diagram_svg(item):
 <rect width="1200" height="420" fill="#0c1423"/><rect width="1200" height="8" fill="{accent}"/><text x="40" y="65" font-family="Arial,sans-serif" font-size="20" font-weight="bold" letter-spacing="3" fill="{light}">{html.escape(item['category'].upper())}</text><text x="40" y="112" font-family="Arial,sans-serif" font-size="31" font-weight="bold" fill="#ffffff">Engineering control loop</text><text x="40" y="151" font-family="Arial,sans-serif" font-size="19" fill="#b5c2d5">A conceptual workflow — adapt validation and controls to the system</text><g font-family="Arial,sans-serif">{''.join(cards)}</g><path d="M 1090 326 v 35 H 135 v -35" fill="none" stroke="{accent}" stroke-width="3" stroke-dasharray="8 8"/><text x="600" y="393" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" fill="#b5c2d5">Feedback informs the next decision</text></svg>'''
 
 
+def design_diagram(item, body):
+    """Ask for a topic-specific diagram spec; None means use the generic image."""
+    limits = diagram.LIMITS
+    prompt = f'''Design the header infographic for this article. It is rendered from your JSON
+by a fixed template: a title with a highlighted accent phrase, three numbered story panels, and a
+bottom strip of steps. Make every label specific to THIS article's argument, using its own concepts;
+the panels should tell the article's story (for example: the trap, what actually happens, the better approach).
+
+Return ONLY JSON with exactly these fields:
+{{
+  "title": "first part of the headline (max {limits['title']} chars)",
+  "accent": "highlighted end of the headline (max {limits['accent']} chars)",
+  "subtitle": "one-sentence thesis (max {limits['subtitle']} chars)",
+  "panels": [
+    {{
+      "heading": "max {limits['heading']} chars",
+      "caption": "what happens at this stage (max {limits['caption']} chars)",
+      "tone": "ok | warn | fail | info",
+      "nodes": ["2 or 3 components or states in flow order, max {limits['node']} chars each"],
+      "note": "key insight for this stage (max {limits['note']} chars)"
+    }}
+  ],
+  "strip_title": "max {limits['strip_title']} chars",
+  "strip_caption": "max {limits['strip_caption']} chars",
+  "steps": [{{"label": "max {limits['step_label']} chars", "detail": "max {limits['step_detail']} chars", "tone": "ok | warn | fail | info"}}]
+}}
+Rules: exactly 3 panels and 3 to 5 steps. Node labels are one to three short words, with no word longer
+than 11 characters. Tone: ok = healthy or recommended, warn = degrading or caution, fail = broken or
+harmful, info = neutral mechanism. No invented statistics, product names or measurements.
+
+TITLE: {item['title']}
+CATEGORY: {item['category']}
+ARTICLE:
+{body[:9000]}'''
+    error = None
+    for attempt in range(2):
+        try:
+            request = prompt if error is None else (
+                prompt + f'\n\nYour previous JSON was rejected: {error}. Return corrected JSON.')
+            spec = ask_llm('You are an information designer for technical diagrams. Return valid JSON only.', request)
+            return diagram.validate_spec(spec)
+        except Exception as exc:
+            error = exc
+            print(f'Diagram design attempt {attempt + 1} for {item["slug"]} failed: {exc}', flush=True)
+    print(f'::warning::Using generic diagram for {item["slug"]}', flush=True)
+    return None
+
+
 def write_article(item, validated):
     desc, tags, body = validated
     slug = item['slug']
@@ -586,8 +637,17 @@ def write_article(item, validated):
         'readTime: ' + json.dumps(f'{max(1, round(len(body.split()) / 210))} min read'),
         'featured: false', 'draft: false', '---', '',
     ])
-    article_path.write_text(meta + f'![Conceptual engineering control loop for {item["title"]}](/images/articles/{slug}.svg)\n\n' + body + '\n', encoding='utf-8')
-    image_path.write_text(diagram_svg(item), encoding='utf-8')
+    spec = design_diagram(item, body)
+    if spec:
+        DIAGRAMS.mkdir(parents=True, exist_ok=True)
+        (DIAGRAMS / (slug + '.json')).write_text(json.dumps(spec, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+        alt = diagram.alt_text(spec).replace('[', '(').replace(']', ')')
+        svg = diagram.render_svg(spec, item['category'])
+    else:
+        alt = f'Conceptual engineering control loop for {item["title"]}'
+        svg = diagram_svg(item)
+    article_path.write_text(meta + f'![{alt}](/images/articles/{slug}.svg)\n\n' + body + '\n', encoding='utf-8')
+    image_path.write_text(svg, encoding='utf-8')
     print(f'Created {article_path.relative_to(ROOT)}', flush=True)
 
 

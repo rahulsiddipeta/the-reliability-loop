@@ -1,0 +1,36 @@
+{
+  "title": "Can AI Agents Be Trusted",
+  "accent": "During Incidents?",
+  "subtitle": "Trust is an engineered property: scoped capabilities, independent gates and verification",
+  "panels": [
+    {
+      "heading": "Copilot: Low Risk",
+      "caption": "The agent summarizes alerts, correlates logs and retrieves the right runbook",
+      "tone": "ok",
+      "nodes": ["Alerts + Logs", "Agent Triage", "Human Decides"],
+      "note": "High leverage, read-only: faster time-to-first-signal with humans in control"
+    },
+    {
+      "heading": "Direct Control: High Risk",
+      "caption": "The agent executes remediation itself, faster than a human can stop a mistake",
+      "tone": "fail",
+      "nodes": ["Agent", "Wrong Tool", "Prod Change"],
+      "note": "Tool misbinding, hallucinated config and prompt injection under incident pressure"
+    },
+    {
+      "heading": "Proposal Plus Gates",
+      "caption": "The agent prepares a diff; machine-checked gates and approval decide",
+      "tone": "ok",
+      "nodes": ["Proposed Diff", "Policy Gates", "Approved Action"],
+      "note": "Least privilege, dry runs, preconditions and invariants, and a full audit trail"
+    }
+  ],
+  "strip_title": "A pragmatic adoption path",
+  "strip_caption": "Expand autonomy only as gates prove precise; keep irreversible actions human-only",
+  "steps": [
+    {"label": "Read-only Copilot", "detail": "Summarize and correlate", "tone": "info"},
+    {"label": "Safe Diagnostics", "detail": "Idempotent, non-destructive", "tone": "info"},
+    {"label": "Proposal + Gates", "detail": "Diff, checks, approval", "tone": "warn"},
+    {"label": "Limited Autonomy", "detail": "Narrow, reversible, audited", "tone": "ok"}
+  ]
+}

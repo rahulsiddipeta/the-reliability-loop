@@ -78,11 +78,11 @@ jobs:
 
       - name: Open pull request for review
         run: |
-          if [[ -z "$(git status --porcelain -- src/content/articles public/images/articles)" ]]; then
+          if [[ -z "$(git status --porcelain -- src/content/articles public/images/articles scripts/diagrams)" ]]; then
             echo "No new articles; nothing to commit."
             exit 0
           fi
-          git add src/content/articles public/images/articles
+          git add src/content/articles public/images/articles scripts/diagrams
           git commit -m "Add automated reliability articles"
           git push --force-with-lease origin "$REVIEW_BRANCH"
 

@@ -1,0 +1,36 @@
+{
+  "title": "Circuit Breakers Don't Fix",
+  "accent": "Broken Dependencies",
+  "subtitle": "A breaker limits the blast radius of a failing dependency; it does not repair it",
+  "panels": [
+    {
+      "heading": "Dependency Degrades",
+      "caption": "The upstream slows down; callers wait on long timeouts and threads pile up",
+      "tone": "warn",
+      "nodes": ["Your Service", "Client Calls", "Slow Dependency"],
+      "note": "Slow calls still count as successes unless they exceed a deadline"
+    },
+    {
+      "heading": "Breaker Opens",
+      "caption": "Failures cross the threshold; calls are short-circuited and fail fast",
+      "tone": "ok",
+      "nodes": ["Your Service", "Breaker: Open", "Fallback"],
+      "note": "Your capacity is protected: threads, queues and tail latency recover"
+    },
+    {
+      "heading": "Dependency Still Broken",
+      "caption": "Half-open probes fail; nothing upstream has been repaired",
+      "tone": "fail",
+      "nodes": ["Half-open Probes", "Same Bottleneck"],
+      "note": "Open breakers can mask degradation and synchronized probes can stampede recovery"
+    }
+  ],
+  "strip_title": "Containment plus a real fix",
+  "strip_caption": "Use the breaker inside a larger pattern, then remediate the dependency itself",
+  "steps": [
+    {"label": "Deadlines", "detail": "Bound work per call", "tone": "info"},
+    {"label": "Concurrency Limits", "detail": "Backpressure on in-flight calls", "tone": "info"},
+    {"label": "Circuit Breaker", "detail": "Fail fast on a known-bad path", "tone": "ok"},
+    {"label": "Fix the Dependency", "detail": "Capacity, decoupling, caching", "tone": "ok"}
+  ]
+}

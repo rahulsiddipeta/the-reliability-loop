@@ -1,0 +1,36 @@
+{
+  "title": "Why Distributed Systems Fail",
+  "accent": "in Partial Ways",
+  "subtitle": "Systems rarely fail all at once; they degrade along specific edges, cohorts and paths",
+  "panels": [
+    {
+      "heading": "Aggregate Looks Fine",
+      "caption": "The overall success rate stays high while one path quietly degrades",
+      "tone": "ok",
+      "nodes": ["Clients", "Load Balancer", "Overall 99.9%"],
+      "note": "A single global success rate hides partial failure by definition"
+    },
+    {
+      "heading": "One Edge Is Broken",
+      "caption": "A hot shard, one zone or a saturated pool fails a subset of requests",
+      "tone": "fail",
+      "nodes": ["Zone B Clients", "Hot Shard", "Pool Exhausted"],
+      "note": "Asymmetric symptoms: clients see timeouts while the server sees healthy traffic"
+    },
+    {
+      "heading": "Contain the Edge",
+      "caption": "Bounded waiting and per-edge controls keep one failure from spreading",
+      "tone": "ok",
+      "nodes": ["Deadlines", "Bulkheads", "Shed Load"],
+      "note": "Budgeted retries with jitter, per-host breakers and readiness gates for brownouts"
+    }
+  ],
+  "strip_title": "Design for the dominant failure mode",
+  "strip_caption": "Put identity, budgets and control at every hop, then rehearse with targeted fault drills",
+  "steps": [
+    {"label": "Per-edge Telemetry", "detail": "By zone, cohort and path", "tone": "info"},
+    {"label": "Correlation IDs", "detail": "Follow requests across hops", "tone": "info"},
+    {"label": "Bounded Retries", "detail": "Backoff, jitter, budgets", "tone": "warn"},
+    {"label": "Fault Drills", "detail": "Test hypotheses on purpose", "tone": "ok"}
+  ]
+}

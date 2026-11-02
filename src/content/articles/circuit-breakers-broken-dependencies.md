@@ -9,7 +9,7 @@ readTime: "11 min read"
 featured: false
 draft: false
 ---
-![Conceptual engineering control loop for Circuit Breakers Don't Fix Broken Dependencies](/images/articles/circuit-breakers-broken-dependencies.svg)
+![Circuit Breakers Don't Fix Broken Dependencies: A breaker limits the blast radius of a failing dependency; it does not repair it](/images/articles/circuit-breakers-broken-dependencies.svg)
 
 ## Why Circuit Breakers Feel Like a Fix
 Circuit breakers are irresistibly simple: when a dependency misbehaves, trip the breaker and stop making it worse. They create a clear boundary, reducing the number of in-flight calls and the time your threads, goroutines, or event loop are stuck waiting. When you deploy one, you often see immediate improvements in tail latency and thread pool starvation, which makes it feel like a root-cause solution.

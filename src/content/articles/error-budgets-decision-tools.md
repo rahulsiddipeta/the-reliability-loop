@@ -9,7 +9,7 @@ readTime: "11 min read"
 featured: false
 draft: false
 ---
-![Conceptual engineering control loop for Error Budgets Are Decision Tools, Not Dashboards](/images/articles/error-budgets-decision-tools.svg)
+![Error Budgets Are Decision Tools: A budget should change what the team does next, not just what the dashboard shows](/images/articles/error-budgets-decision-tools.svg)
 
 ## Error Budgets Are Decision Tools, Not Dashboards
 
