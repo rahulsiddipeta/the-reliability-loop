@@ -1,0 +1,69 @@
+{
+  "title": "When Kubernetes HPA Makes",
+  "accent": "Incidents Worse",
+  "subtitle": "HPA's loop can amplify incidents; choose sane signals, delays, and guardrails.",
+  "panels": [
+    {
+      "heading": "Scale-chasing latency",
+      "caption": "HPA sees high CPU, adds pods; cold starts slow more; backlog grows; loop escalates.",
+      "tone": "fail",
+      "nodes": [
+        "Rising latency",
+        "More replicas",
+        "Warmup storm"
+      ],
+      "note": "Cold pods worsen latency; tune warm capacity and loop delay."
+    },
+    {
+      "heading": "Throttled scale-out",
+      "caption": "Low requests pump utilization; low limits throttle pods; cluster grows but work stalls.",
+      "tone": "fail",
+      "nodes": [
+        "Low request",
+        "Low limit",
+        "Throttled pods"
+      ],
+      "note": "Align requests to baseline; avoid tight CPU limits under load."
+    },
+    {
+      "heading": "Intentional autoscaling",
+      "caption": "Use stable signals, warm minima, gentle downscale, bounded upscale; respect delays.",
+      "tone": "ok",
+      "nodes": [
+        "Sane signals",
+        "Warm minima",
+        "Bounded steps"
+      ],
+      "note": "Pick metrics that match bottlenecks; set behavior windows to dampen swings."
+    }
+  ],
+  "strip_title": "Guardrails to keep HPA calm in incidents",
+  "strip_caption": "Turn a fragile loop into a stable one: fix signals, rightsize requests/limits, and add behavior damping.",
+  "steps": [
+    {
+      "label": "Rightsize CPU requests",
+      "detail": "Match to steady use, not wishful packing.",
+      "tone": "ok"
+    },
+    {
+      "label": "Avoid tight CPU limits",
+      "detail": "Prevent CFS throttling during real load.",
+      "tone": "warn"
+    },
+    {
+      "label": "Stabilize downscale",
+      "detail": "Keep warm pods; delay and step down gently.",
+      "tone": "ok"
+    },
+    {
+      "label": "Bound and pace scale-up",
+      "detail": "Cap jumps; respect startup and metric lag.",
+      "tone": "ok"
+    },
+    {
+      "label": "Scale on per-pod rate",
+      "detail": "Prefer per-pod rate over raw backlog size.",
+      "tone": "ok"
+    }
+  ]
+}

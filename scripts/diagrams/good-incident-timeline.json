@@ -1,0 +1,69 @@
+{
+  "title": "The Anatomy of a Good Incident",
+  "accent": "Timeline",
+  "subtitle": "A falsifiable, source-backed sequence that shows cause, choices, and effects.",
+  "panels": [
+    {
+      "heading": "Chat log is not timeline",
+      "caption": "Chats, alerts, and tickets become the timeline, hiding cause, order, and uncertainty.",
+      "tone": "fail",
+      "nodes": [
+        "chat feed",
+        "alert stream",
+        "ticket queue"
+      ],
+      "note": "A tool echo log misorders events and hardens bias."
+    },
+    {
+      "heading": "What a timeline is",
+      "caption": "A source-backed sequence ordered by occurred_at, with uncertainty and offsets explicit.",
+      "tone": "info",
+      "nodes": [
+        "occurred_at",
+        "evidence refs",
+        "order rule"
+      ],
+      "note": "Traceability over precision; anchor to verifiable sources; keep UTC canonical."
+    },
+    {
+      "heading": "The better approach",
+      "caption": "Use a small schema and taxonomy; blend sources; mark confidence; verify with durable refs.",
+      "tone": "ok",
+      "nodes": [
+        "small schema",
+        "typed entries",
+        "verify links"
+      ],
+      "note": "Split decisions, actions, and state change; reconcile later with clear refs."
+    }
+  ],
+  "strip_title": "Build a trustworthy incident timeline",
+  "strip_caption": "From capture to audit: a path to falsifiable, source-backed, UTC-ordered timelines.",
+  "steps": [
+    {
+      "label": "Define the entry schema",
+      "detail": "occurred_at UTC, actor, type, summary",
+      "tone": "ok"
+    },
+    {
+      "label": "Capture with sources",
+      "detail": "Link evidence refs; prefer durable IDs",
+      "tone": "ok"
+    },
+    {
+      "label": "Order by event time",
+      "detail": "Use occurred_at; tie-break with seq",
+      "tone": "ok"
+    },
+    {
+      "label": "Mark uncertainty",
+      "detail": "Record confidence and any known skew",
+      "tone": "warn"
+    },
+    {
+      "label": "Reconcile and verify",
+      "detail": "Cross-check each entry with external proof",
+      "tone": "ok"
+    }
+  ]
+}
