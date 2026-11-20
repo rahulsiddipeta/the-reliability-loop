@@ -1,0 +1,69 @@
+{
+  "title": "Designing Safe",
+  "accent": "Auto-Remediation",
+  "subtitle": "Safety-first controllers prevent change storms and fix outages without erasing evidence.",
+  "panels": [
+    {
+      "heading": "The unsafe automation trap",
+      "caption": "Unbounded, noisy-triggered fixes oscillate, erase audit trails, and intensify impact.",
+      "tone": "fail",
+      "nodes": [
+        "Noisy alerts",
+        "Blind actions",
+        "Change storm"
+      ],
+      "note": "Wrong time, wrong scope, and no bounds turn help into harm."
+    },
+    {
+      "heading": "Invariants that define safe",
+      "caption": "Least privilege, auditability, idempotence, reversibility, and bounded change.",
+      "tone": "info",
+      "nodes": [
+        "Least privilege",
+        "Audit trail",
+        "Bounded change"
+      ],
+      "note": "No single step may raise severity; preserve evidence outside the blast radius."
+    },
+    {
+      "heading": "Guarded feedback controller",
+      "caption": "Act on user signals with thresholds, hysteresis, backoff, budgets, and vetted actions.",
+      "tone": "ok",
+      "nodes": [
+        "User signals",
+        "Hysteresis",
+        "Backoff"
+      ],
+      "note": "Gate AI by policy; pace retries; timebox and shard to avoid herds."
+    }
+  ],
+  "strip_title": "Blueprint for safe, fast auto-remediation in prod",
+  "strip_caption": "Tie actions to user impact, pace retries, cap scope and duration, and record evidence.",
+  "steps": [
+    {
+      "label": "Choose user signals",
+      "detail": "Trigger on SLO and golden signals.",
+      "tone": "info"
+    },
+    {
+      "label": "Set safety invariants",
+      "detail": "Auth, audit, idempotence, rollback, bounds.",
+      "tone": "ok"
+    },
+    {
+      "label": "Design the control loop",
+      "detail": "Use thresholds, hysteresis, and backoff.",
+      "tone": "ok"
+    },
+    {
+      "label": "Constrain actions",
+      "detail": "Prechecks, scoped effects, and timeboxes.",
+      "tone": "ok"
+    },
+    {
+      "label": "Guard AI and verify",
+      "detail": "Vetted catalog; log inputs and results.",
+      "tone": "ok"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "title": "Observability Costs Are",
+  "accent": "an Architecture Problem",
+  "subtitle": "Your diagram sets the telemetry bill; fix topology, volume, cardinality, and retention.",
+  "panels": [
+    {
+      "heading": "The vendor trap",
+      "caption": "Teams chase cheaper tools and toggles; months later the spend snaps back.",
+      "tone": "fail",
+      "nodes": [
+        "Shop vendors",
+        "Tweak limits",
+        "Spend drifts"
+      ],
+      "note": "Cost follows design, not contracts."
+    },
+    {
+      "heading": "Cost is in the topology",
+      "caption": "Fan out, retries, and hot labels multiply events and series before queries begin.",
+      "tone": "warn",
+      "nodes": [
+        "High fan out",
+        "Hot labels",
+        "Series blowup"
+      ],
+      "note": "Every hop adds events and labels; unbounded IDs explode series."
+    },
+    {
+      "heading": "Design the telemetry plane",
+      "caption": "Bound IDs, move sampling to source, derive metrics, and enforce budgets.",
+      "tone": "ok",
+      "nodes": [
+        "Design plane",
+        "Bound labels",
+        "Source sample"
+      ],
+      "note": "Align spend to value with upstream rules and outcome aware sampling."
+    }
+  ],
+  "strip_title": "Turn the diagram into spend control",
+  "strip_caption": "Trace costs to volume, cardinality, retention; set service budgets and pipeline SLAs.",
+  "steps": [
+    {
+      "label": "Map fan out and retries",
+      "detail": "Find where one request turns into many.",
+      "tone": "info"
+    },
+    {
+      "label": "Cap hot label space",
+      "detail": "Ban unbounded IDs on hot series.",
+      "tone": "ok"
+    },
+    {
+      "label": "Right size volume",
+      "detail": "Summarize events; emit off hot path.",
+      "tone": "ok"
+    },
+    {
+      "label": "Tune retention tiers",
+      "detail": "Short hot tier; rollups or samples cold.",
+      "tone": "info"
+    },
+    {
+      "label": "Set budgets and SLAs",
+      "detail": "Define per service limits and failover SLAs.",
+      "tone": "ok"
+    }
+  ]
+}

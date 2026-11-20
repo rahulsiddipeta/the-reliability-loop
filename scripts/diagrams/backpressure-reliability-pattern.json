@@ -1,0 +1,69 @@
+{
+  "title": "Backpressure: The Reliability Pattern",
+  "accent": "We Underuse",
+  "subtitle": "Explicit pushback caps work-in-progress to keep latency bounded and outages contained.",
+  "panels": [
+    {
+      "heading": "The comforting trap",
+      "caption": "We queue and retry to be 'reliable', hiding overload until latency collapses.",
+      "tone": "fail",
+      "nodes": [
+        "burst load",
+        "deep queue",
+        "retry storm"
+      ],
+      "note": "Unbounded work in progress turns bursts into long delays and cascading failure."
+    },
+    {
+      "heading": "What really happens",
+      "caption": "Open-loop retries amplify load; autoscaling reacts late; queues grow; SLOs are blown.",
+      "tone": "warn",
+      "nodes": [
+        "open loop",
+        "positive feedback",
+        "latency spike"
+      ],
+      "note": "Without feedback, clients push harder exactly when servers are slowest."
+    },
+    {
+      "heading": "Deliberate pushback",
+      "caption": "Cap in-flight work, send clear 429/503 or hints, and respect backoff with retry budgets.",
+      "tone": "ok",
+      "nodes": [
+        "in flight cap",
+        "clear pushback",
+        "jittered backoff"
+      ],
+      "note": "Bounded WIP with explicit signals turns overload into a stable plateau."
+    }
+  ],
+  "strip_title": "How to design and verify pushback",
+  "strip_caption": "Practical moves to add backpressure, avoid hidden queues, and keep clients civil.",
+  "steps": [
+    {
+      "label": "Set hard WIP bounds",
+      "detail": "Gate in-flight ops; prefer fast failure.",
+      "tone": "ok"
+    },
+    {
+      "label": "Return clear pushback",
+      "detail": "Use 429/503 or error hints to slow senders.",
+      "tone": "ok"
+    },
+    {
+      "label": "Tame retries",
+      "detail": "Exponential backoff, jitter, retry budgets.",
+      "tone": "ok"
+    },
+    {
+      "label": "Protect fairness",
+      "detail": "Per-tenant caps; borrow idle with care.",
+      "tone": "info"
+    },
+    {
+      "label": "Prove it under stress",
+      "detail": "Burst test; watch queue depth and p99.",
+      "tone": "ok"
+    }
+  ]
+}

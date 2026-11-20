@@ -1,0 +1,69 @@
+{
+  "title": "OpenTelemetry: Instrumentation",
+  "accent": "is only the beginning",
+  "subtitle": "Spans are step one; control and data planes make telemetry reliable and operable.",
+  "panels": [
+    {
+      "heading": "The first-spans trap",
+      "caption": "First spans land; teams pause. Identity drift and head sampling starve tail policies.",
+      "tone": "warn",
+      "nodes": [
+        "App emits spans",
+        "Backend looks fine",
+        "Gaps bite later"
+      ],
+      "note": "Milestone hides schema churn, propagation gaps, and starved tail decisions."
+    },
+    {
+      "heading": "Control and data reality",
+      "caption": "Shared identity, schema discipline, and safe head+tail sampling govern signal value.",
+      "tone": "info",
+      "nodes": [
+        "Identity rules",
+        "Sampling plan",
+        "Collector limits"
+      ],
+      "note": "Place collectors near apps; use gateways to normalize and enforce per-tenant limits."
+    },
+    {
+      "heading": "Operate: verify and measure",
+      "caption": "Continuously test propagation, watch queues and exporters, and set actionable SLOs.",
+      "tone": "ok",
+      "nodes": [
+        "Context test",
+        "Collector health",
+        "SLO alerts"
+      ],
+      "note": "Compare 5xx to error traces; tie alerts to exporter success and queue depth."
+    }
+  ],
+  "strip_title": "Build an operable OTel control + data plane",
+  "strip_caption": "Go beyond first spans: standardize identity, sample safely, harden pipelines, and verify.",
+  "steps": [
+    {
+      "label": "Fix service identity",
+      "detail": "Enforce service.name and namespace",
+      "tone": "ok"
+    },
+    {
+      "label": "Stabilize schemas",
+      "detail": "Track versions; document transforms",
+      "tone": "info"
+    },
+    {
+      "label": "Design sampling safely",
+      "detail": "Tail where needed; avoid starving",
+      "tone": "warn"
+    },
+    {
+      "label": "Harden the data plane",
+      "detail": "Close collectors; bounded queues & retry",
+      "tone": "ok"
+    },
+    {
+      "label": "Verify and set SLOs",
+      "detail": "Test propagation; alert on delivery gaps",
+      "tone": "ok"
+    }
+  ]
+}
