@@ -1,0 +1,69 @@
+{
+  "title": "Platform Engineering vs. SRE",
+  "accent": "Where Ownership Breaks",
+  "subtitle": "Explicit platform-SRE contracts and SLOs stop seam debt and make tension productive.",
+  "panels": [
+    {
+      "heading": "Where the Boundary Fails",
+      "caption": "Blurred missions create seam debt: upgrades collide, gates stall, and no one owns incidents.",
+      "tone": "fail",
+      "nodes": [
+        "Blurred roles",
+        "Seam debt",
+        "No owner"
+      ],
+      "note": "Write the boundary or you inherit outages from assumptions and invisible queues."
+    },
+    {
+      "heading": "Missions and Time Horizons",
+      "caption": "Platform serves devs with paved paths; SRE owns user SLOs, error budgets, and incidents.",
+      "tone": "info",
+      "nodes": [
+        "Platform as product",
+        "SRE as risk",
+        "User impact"
+      ],
+      "note": "Treat the platform like any dependency, with SLIs, budgets, and clear escalations."
+    },
+    {
+      "heading": "Contracts Make Tension Useful",
+      "caption": "Publish SLIs/SLOs, tie budgets to change policy, and predefine rollback and deprecation.",
+      "tone": "ok",
+      "nodes": [
+        "SLIs and SLOs",
+        "Error budgets",
+        "Change policy"
+      ],
+      "note": "Good fences are paved paths plus testable contracts and shared KPIs."
+    }
+  ],
+  "strip_title": "How to make the boundary real and durable",
+  "strip_caption": "Turn blurred goodwill into productized contracts, shared SLIs, and budgeted change.",
+  "steps": [
+    {
+      "label": "Define the contract",
+      "detail": "APIs, change rules, SLIs, deprecations.",
+      "tone": "ok"
+    },
+    {
+      "label": "Publish platform SLIs",
+      "detail": "SLOs for CI, deploys, and control plane.",
+      "tone": "ok"
+    },
+    {
+      "label": "Stitch budgets to policy",
+      "detail": "Gate rollouts when deps miss their SLOs.",
+      "tone": "ok"
+    },
+    {
+      "label": "Pre-plan rollback power",
+      "detail": "Name decider, exit checks, and soak rules.",
+      "tone": "ok"
+    },
+    {
+      "label": "Align cross-team KPIs",
+      "detail": "Join adoption with MTTR and budget burn.",
+      "tone": "ok"
+    }
+  ]
+}
